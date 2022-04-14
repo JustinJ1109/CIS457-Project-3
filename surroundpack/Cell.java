@@ -1,7 +1,4 @@
-package surroundpack;
 
-import javax.swing.*;
-import java.awt.*;
 
 /**
  * Contains individual cell properties. What does a cell do?

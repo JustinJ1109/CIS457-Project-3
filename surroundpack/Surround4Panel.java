@@ -1,4 +1,3 @@
-package surroundpack;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
