@@ -1,6 +1,3 @@
-package surroundpack;
-
-import java.util.ArrayList;
 
 /**
  * Main handler that handles all the logic behind cell interactions
