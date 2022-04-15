@@ -1,13 +1,10 @@
 
 
-
-
 public class ClientModel {
 
     String userName;
-    int port;
     /** establish connection with server, tell it to make a new game, connect client to that game */
-    public void hostGame() {
+    public void hostGame(String lobbyName) {
 
     }
 
@@ -31,7 +28,5 @@ public class ClientModel {
         userName = name;
     }
 
-    public void setPort(int port) {
-        this.port = port;
-    }
+
 }   

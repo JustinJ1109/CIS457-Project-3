@@ -23,10 +23,15 @@ public class GUI {
         gamePanel;
 
     private JTextField
-        portNumField,
+        lobbyNameField,
         userNameField;
 
-
+    /**************************************************************
+     * GUI constructor
+     * 
+     *  Creates all panels for each GUI display and formats them
+     *  for the menu, host screen, join screen, and game screen
+     *************************************************************/
     public GUI(String title) {
 
         frame = new JFrame(title);
@@ -36,7 +41,7 @@ public class GUI {
         hostPanel = new JPanel();
         gamePanel = new JPanel();
 
-        /** MENU LAYOUT */
+    /** MENU LAYOUT */
         GroupLayout menuLayout = new GroupLayout(menuPanel);
         menuLayout.setAutoCreateGaps(true);
         menuLayout.setAutoCreateContainerGaps(true);
@@ -54,7 +59,6 @@ public class GUI {
         menuPanel.add(menuConnectGameButton);
         menuPanel.add(menuQuitButton);
 
-
         menuLayout.setHorizontalGroup(
             menuLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
                 .addComponent(menuTitleLabel)
@@ -62,7 +66,6 @@ public class GUI {
                 .addComponent(menuConnectGameButton)
                 .addComponent(menuQuitButton)
         );
-
         menuLayout.setVerticalGroup(
             menuLayout.createSequentialGroup()
                 .addComponent(menuTitleLabel)
@@ -74,7 +77,7 @@ public class GUI {
         menuHostGameButton.addActionListener(e -> swapPanel("host"));
         menuConnectGameButton.addActionListener(e -> swapPanel("join"));
 
-        /** HOST LAYOUT */
+    /** HOST LAYOUT */
         GroupLayout hostLayout = new GroupLayout(hostPanel);
         hostLayout.setAutoCreateGaps(true);
         hostLayout.setAutoCreateContainerGaps(true);
@@ -82,13 +85,13 @@ public class GUI {
 
         JLabel hostTitleLabel = new JLabel("Host a Game");
         JLabel userNameLabel = new JLabel("User Name");
-        JLabel portNumLabel = new JLabel("Port");
+        JLabel lobbyNameLabel = new JLabel("Lobby Name");
 
         userNameField = new JTextField();
-        portNumField = new JTextField();
+        lobbyNameField = new JTextField();
 
         userNameField.setColumns(22);
-        portNumField.setColumns(22);
+        lobbyNameField.setColumns(22);
 
         hostTitleLabel.setFont(new Font(hostTitleLabel.getFont().getName(), Font.PLAIN, 40));
 
@@ -102,14 +105,14 @@ public class GUI {
         hostUNPanel.add(userNameLabel);
         hostUNPanel.add(userNameField);
 
-        JPanel hostPortPanel = new JPanel();
-        hostPortPanel.add(portNumLabel);
-        hostPortPanel.add(portNumField);
+        JPanel hostLobbyNamePanel = new JPanel();
+        hostLobbyNamePanel.add(lobbyNameLabel);
+        hostLobbyNamePanel.add(lobbyNameField);
 
         JPanel hostInputPanels = new JPanel();
         hostInputPanels.setLayout(new BoxLayout(hostInputPanels, BoxLayout.Y_AXIS));
         hostInputPanels.add(hostUNPanel);
-        hostInputPanels.add(hostPortPanel);
+        hostInputPanels.add(hostLobbyNamePanel);
 
         // add fields and button to panel
         hostPanel.add(hostTitleLabel);
@@ -123,7 +126,6 @@ public class GUI {
                 .addComponent(backButton)
                 .addComponent(startButton)
         );
-
         hostLayout.setVerticalGroup(
             hostLayout.createSequentialGroup()
                 .addComponent(hostTitleLabel)
@@ -132,20 +134,17 @@ public class GUI {
                 .addComponent(startButton)
         );
         
-        /** INITIAL STATE SETUP DO NOT TOUCH */
+
+    /** INITIAL STATE SETUP DO NOT TOUCH */
         frame.getContentPane().add(menuPanel);
 
         frame.setPreferredSize(SCREEN_SIZE);
         frame.setMaximumSize(SCREEN_SIZE);
         frame.setMinimumSize(SCREEN_SIZE);
         frame.setResizable(false);
-        
-        // frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
         frame.setVisible(true);
-
     }
 
     public JButton getStartButton() {
@@ -160,8 +159,8 @@ public class GUI {
         return userNameField;
     }
 
-    public JTextField getPortNumField() {
-        return portNumField;
+    public JTextField getLobbyNameField() {
+        return lobbyNameField;
     }
 
     public void swapPanel(String newPanel) {
