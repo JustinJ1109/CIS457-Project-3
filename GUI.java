@@ -6,13 +6,6 @@ public class GUI {
 
     private final Dimension SCREEN_SIZE = new Dimension(500, 600);
 
-    private enum frameStates {
-        menu,
-        host,
-        join,
-        game
-    };
-
     private JFrame frame;
 
     private JButton 
