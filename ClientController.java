@@ -17,43 +17,41 @@ public class ClientController {
     /** tell client to open a new game with client's input info */
     private void hostGame() {
         // check if info is correct first
-        String temp = gui.getUserNameField().getText();
+        String userName = gui.getUserNameField().getText();
+        String lobbyName = gui.getLobbyNameField().getText();
 
-        if (temp.equals("")) {
+        if (userName.equals("")) {
             System.out.println("Must input a username");
             return;
         }
-        if (temp.contains(" ")) {
+        if (userName.contains(" ")) {
             System.out.println("Username cannot contain spaces");
             return;
         }
 
-        if (gui.getPortNumField().getText().equals("")) {
-            System.out.println("Must input a port number");
+        if (lobbyName.equals("")) {
+            System.out.println("Must input a lobby name");
             return;
+        }
+        if (lobbyName.contains(" ")) {
+            System.out.println("Lobby name cannot contain spaces");
         }
         
         model.setUserName(gui.getUserNameField().getText());
 
         try {
-            // TODO: better port error checking
-            int port = Integer.parseInt(gui.getPortNumField().getText());
-            model.setPort(port);
-        }
-        catch (Exception e) {
-            System.out.println("Invalid number used as port");
-            return;
-        }
-
-        try {
-            model.hostGame();
+            model.hostGame(lobbyName);
         }
         catch (Exception e) {
             System.out.println("Could not Host game on server:");
             e.printStackTrace();
         }
 
+        gui.getUserNameField().setText("");
+        gui.getLobbyNameField().setText("");
+
         System.out.println("Hosting");
+        gui.swapPanel("game");
     }
 
     /** tell server to join selected game */
