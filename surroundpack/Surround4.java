@@ -39,7 +39,7 @@ public class Surround4 {
 
 		frame.setJMenuBar(menus);
 
-		Surround4Panel panel = new Surround4Panel(quitItem, newGameItem, undoButton);
+		Surround4Panel panel = new Surround4Panel();
 		frame.add(panel);
 		frame.setSize(600, 600);
 		frame.setVisible(true);

@@ -12,21 +12,15 @@ public class Surround4Panel extends JPanel {
     private int boardSize, numPlayers, startingPlayer, lastRow, lastCol;
     private boolean undoStatus;
     private ButtonListener listen;
-    private JMenuItem quitItem, newGameItem;
     private Surround4Game game;
-    private JButton undoButton;
 
     private JLabel[] scoreLabels;
     private static int[] scores;
 
 
 
-    public Surround4Panel(JMenuItem pQuitItem, JMenuItem pNewGameItem, JButton pundoButton) {
-
-        undoStatus = false;
-        undoButton = pundoButton;
-        quitItem = pQuitItem;
-        newGameItem = pNewGameItem;
+    public Surround4Panel() {
+        
         listen = new ButtonListener();
 
 
@@ -102,91 +96,88 @@ public class Surround4Panel extends JPanel {
         add(panel1, BorderLayout.CENTER);
         add(panel3, BorderLayout.SOUTH);
 
-        undoButton.addActionListener(listen);
-        quitItem.addActionListener(listen);
-        newGameItem.addActionListener(listen);
-
     }
 
     private class ButtonListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            if (e.getSource() == quitItem) {
-                System.exit(1);
-            }
 
-            if (e.getSource() == newGameItem) {
-                game.reset();
-                panel1.removeAll();
-                panel2.removeAll();
-                panel3.removeAll();
+            //////////////////////////////////////
+            // NEW GAME CODE
+            // if (false) {
+            //     game.reset();
+            //     panel1.removeAll();
+            //     panel2.removeAll();
+            //     panel3.removeAll();
 
-                String strBdSize = JOptionPane.showInputDialog(null,
-                        "Enter in the size of the board: ");
-                try {
-                    boardSize = Integer.parseInt(strBdSize);
-                    if (boardSize <= 3 || boardSize >= 20) {
-                        //Jumps to catch statement
-                        throw new NumberFormatException();
-                    }
-                } catch (NumberFormatException f) {
-                    JOptionPane.showMessageDialog(null,
-                            "Invalid input. Using board of size 10.");
-                    boardSize = 10;
-                }
+            //     String strBdSize = JOptionPane.showInputDialog(null,
+            //             "Enter in the size of the board: ");
+            //     try {
+            //         boardSize = Integer.parseInt(strBdSize);
+            //         if (boardSize <= 3 || boardSize >= 20) {
+            //             //Jumps to catch statement
+            //             throw new NumberFormatException();
+            //         }
+            //     } catch (NumberFormatException f) {
+            //         JOptionPane.showMessageDialog(null,
+            //                 "Invalid input. Using board of size 10.");
+            //         boardSize = 10;
+            //     }
 
-                String strNumPlayers = JOptionPane.showInputDialog(null,
-                        "Enter the number of players: ");
-                try {
-                    numPlayers = Integer.parseInt(strNumPlayers);
-                    if (numPlayers < 2 || numPlayers > 99) {
-                        //Jumps to catch statement
-                        throw new NumberFormatException();
-                    }
-                } catch (NumberFormatException f) {
-                    JOptionPane.showMessageDialog(null,
-                            "Invalid input. Using 2 players.");
-                    numPlayers = 2;
-                }
+            //     String strNumPlayers = JOptionPane.showInputDialog(null,
+            //             "Enter the number of players: ");
+            //     try {
+            //         numPlayers = Integer.parseInt(strNumPlayers);
+            //         if (numPlayers < 2 || numPlayers > 99) {
+            //             //Jumps to catch statement
+            //             throw new NumberFormatException();
+            //         }
+            //     } catch (NumberFormatException f) {
+            //         JOptionPane.showMessageDialog(null,
+            //                 "Invalid input. Using 2 players.");
+            //         numPlayers = 2;
+            //     }
 
-                String strStartingPlayer = JOptionPane.showInputDialog(null,
-                        "Who starts first?");
-                try {
-                    startingPlayer = Integer.parseInt(strStartingPlayer);
-                    if (startingPlayer < 0 || startingPlayer > numPlayers - 1) {
-                        //Jumps to catch statement
-                        throw new NumberFormatException();
-                    }
-                } catch (NumberFormatException f) {
-                    JOptionPane.showMessageDialog(null,
-                            "Invalid input. Starting with Player 0.");
-                    startingPlayer = 0;
-                }
-                createScores();
+            //     String strStartingPlayer = JOptionPane.showInputDialog(null,
+            //             "Who starts first?");
+            //     try {
+            //         startingPlayer = Integer.parseInt(strStartingPlayer);
+            //         if (startingPlayer < 0 || startingPlayer > numPlayers - 1) {
+            //             //Jumps to catch statement
+            //             throw new NumberFormatException();
+            //         }
+            //     } catch (NumberFormatException f) {
+            //         JOptionPane.showMessageDialog(null,
+            //                 "Invalid input. Starting with Player 0.");
+            //         startingPlayer = 0;
+            //     }
+            //     createScores();
 
-                game = new Surround4Game(boardSize,numPlayers,startingPlayer);
-                createBoard();
-                add(panel2, BorderLayout.NORTH);
-                add(panel1, BorderLayout.CENTER);
-                add(panel3, BorderLayout.SOUTH);
-                panel1.revalidate();
-                panel2.revalidate();
-                panel3.revalidate();
-                panel1.repaint();
-                panel2.repaint();
-                panel3.repaint();
+            //     game = new Surround4Game(boardSize,numPlayers,startingPlayer);
+            //     createBoard();
+            //     add(panel2, BorderLayout.NORTH);
+            //     add(panel1, BorderLayout.CENTER);
+            //     add(panel3, BorderLayout.SOUTH);
+            //     panel1.revalidate();
+            //     panel2.revalidate();
+            //     panel3.revalidate();
+            //     panel1.repaint();
+            //     panel2.repaint();
+            //     panel3.repaint();
 
-            }
-            if(e.getSource() == undoButton) {
-                if(undoStatus) {
-                    game.undo(lastRow, lastCol);
-                    game.previousPlayer();
-                    board[lastRow][lastCol].setBackground(null);
-                    undoStatus = false;
-                }
-                else {
-                    JOptionPane.showMessageDialog(null, "Unable to undo.");
-                }
-            }
+            // }
+            /// END NEW GAME CODE
+
+            // if(e.getSource() == undoButton) {
+            //     if(undoStatus) {
+            //         game.undo(lastRow, lastCol);
+            //         game.previousPlayer();
+            //         board[lastRow][lastCol].setBackground(null);
+            //         undoStatus = false;
+            //     }
+            //     else {
+            //         JOptionPane.showMessageDialog(null, "Unable to undo.");
+            //     }
+            // }
 
             for (int row = 0; row < board.length; row++) {
                 for (int col = 0; col < board[0].length; col++) {

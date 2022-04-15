@@ -1,15 +1,20 @@
-public class gameserver extends Thread {
+import java.io.*;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.util.StringTokenizer;
+
+public class GameServer extends Thread {
 	private Socket connectionSocket;
 	
 	int port;
 	InetAddress clientName;
-	private static DataoutputStream outToClient;
+	private static DataOutputStream outToClient;
 	private DataInputStream inFromClient;
 	
 	boolean welcome;
 	private boolean running;
 	
-	public gameserver(Socket connectionSocket) throws Exception {
+	public GameServer(Socket connectionSocket) throws Exception {
 		this.connectionSocket = connectionSocket;
 		outToClient = new DataOutputStream(this.connectionSocket.getOutputStream());
 		inFromClient = new DataInputStream(this.connectionSocket.getInputStream());

@@ -1,6 +1,7 @@
 
 import java.awt.*;
 import javax.swing.*;
+import surroundpack.Surround4Panel;
 
 public class GUI {
 
@@ -16,7 +17,8 @@ public class GUI {
         menuQuitButton,
 
         startButton,
-        backButton,
+        hostBackButton,
+        joinBackButton,
 
         joinButton;
 
@@ -32,8 +34,10 @@ public class GUI {
     /** Text Fields (user input) */
     private JTextField
         lobbyNameField,
-        userNameField,
-        serverHostIPField;
+        hostUserNameField,
+        joinUserNameField,
+        serverHostIPField,
+        serverHostPortField;
 
     /**************************************************************
      * GUI constructor
@@ -48,7 +52,7 @@ public class GUI {
         menuPanel = new JPanel();
         joinPanel = new JPanel();
         hostPanel = new JPanel();
-        gamePanel = new JPanel();
+        gamePanel = new Surround4Panel();
 
     /** MENU LAYOUT */
         GroupLayout menuLayout = new GroupLayout(menuPanel);
@@ -58,6 +62,7 @@ public class GUI {
 
         JLabel menuTitleLabel = new JLabel("Surround Game Online!");
         JLabel menuServerHostIPLabel = new JLabel("Server IP");
+        JLabel menuServerPortLabel = new JLabel("Server Port");
 
         menuTitleLabel.setFont(new Font(menuTitleLabel.getFont().getName(), Font.PLAIN, 40));
 
@@ -67,18 +72,24 @@ public class GUI {
 
         // Text field
         serverHostIPField = new JTextField();
+        serverHostPortField = new JTextField();
         serverHostIPField.setColumns(22);
+        serverHostPortField.setColumns(22);
 
-        JPanel serverConnectionInfoPanel = new JPanel();
-        serverConnectionInfoPanel.setLayout(new BoxLayout(serverConnectionInfoPanel, BoxLayout.Y_AXIS));
-        serverConnectionInfoPanel.add(menuServerHostIPLabel);
-        serverConnectionInfoPanel.add(serverHostIPField);
+        JPanel serverConnectionIPPanel = new JPanel();
+        serverConnectionIPPanel.add(menuServerHostIPLabel);
+        serverConnectionIPPanel.add(serverHostIPField);
+
+        JPanel serverConnectionPortPanel = new JPanel();
+        serverConnectionPortPanel.add(menuServerPortLabel);
+        serverConnectionPortPanel.add(serverHostPortField);
 
         menuPanel.add(menuTitleLabel);
         menuPanel.add(menuHostGameButton);
         menuPanel.add(menuConnectGameButton);
         menuPanel.add(menuQuitButton);
-        menuPanel.add(serverConnectionInfoPanel);
+        menuPanel.add(serverConnectionIPPanel);
+        menuPanel.add(serverConnectionPortPanel);
 
         menuLayout.setHorizontalGroup(
             menuLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
@@ -87,7 +98,8 @@ public class GUI {
                 .addComponent(menuConnectGameButton)
                 .addComponent(menuQuitButton)
 
-                .addComponent(serverConnectionInfoPanel)
+                .addComponent(serverConnectionIPPanel)
+                .addComponent(serverConnectionPortPanel)
         );
         menuLayout.setVerticalGroup(
             menuLayout.createSequentialGroup()
@@ -96,12 +108,9 @@ public class GUI {
                 .addComponent(menuConnectGameButton)
                 .addComponent(menuQuitButton)
 
-                .addComponent(serverConnectionInfoPanel)
-        
+                .addComponent(serverConnectionIPPanel)
+                .addComponent(serverConnectionPortPanel)
         );
-
-        menuHostGameButton.addActionListener(e -> swapPanel("host"));
-        menuConnectGameButton.addActionListener(e -> swapPanel("join"));
 
     /** HOST LAYOUT */
         GroupLayout hostLayout = new GroupLayout(hostPanel);
@@ -113,22 +122,22 @@ public class GUI {
         JLabel userNameLabel = new JLabel("User Name");
         JLabel lobbyNameLabel = new JLabel("Lobby Name");
 
-        userNameField = new JTextField();
+        hostUserNameField = new JTextField();
         lobbyNameField = new JTextField();
 
-        userNameField.setColumns(22);
+        hostUserNameField.setColumns(22);
         lobbyNameField.setColumns(22);
 
         hostTitleLabel.setFont(new Font(hostTitleLabel.getFont().getName(), Font.PLAIN, 40));
 
         // add text fields and start button
         startButton = new JButton("Start Game");
-        backButton = new JButton("Back");
+        hostBackButton = new JButton("Back");
 
 
         JPanel hostUNPanel = new JPanel();
         hostUNPanel.add(userNameLabel);
-        hostUNPanel.add(userNameField);
+        hostUNPanel.add(hostUserNameField);
 
         JPanel hostLobbyNamePanel = new JPanel();
         hostLobbyNamePanel.add(lobbyNameLabel);
@@ -148,14 +157,14 @@ public class GUI {
             hostLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
                 .addComponent(hostTitleLabel)
                 .addComponent(hostInputPanels)
-                .addComponent(backButton)
+                .addComponent(hostBackButton)
                 .addComponent(startButton)
         );
         hostLayout.setVerticalGroup(
             hostLayout.createSequentialGroup()
                 .addComponent(hostTitleLabel)
                 .addComponent(hostInputPanels)
-                .addComponent(backButton)
+                .addComponent(hostBackButton)
                 .addComponent(startButton)
         );
 
@@ -169,27 +178,23 @@ public class GUI {
         JLabel joinTitleLabel = new JLabel("Join a Game");
         JLabel joiningUserNameLabel = new JLabel("User Name");
 
-        userNameField = new JTextField();
-        userNameField.setColumns(22);
+        joinUserNameField = new JTextField();
+        joinUserNameField.setColumns(22);
 
         joinTitleLabel.setFont(new Font(joinTitleLabel.getFont().getName(), Font.PLAIN, 40));
 
         // add text fields and start button
         joinButton = new JButton("Join Game");
+        joinBackButton = new JButton("Back");
 
 
         JPanel joinUNPanel = new JPanel();
         joinUNPanel.add(joiningUserNameLabel);
-        joinUNPanel.add(userNameField);
-
-        // JPanel joinLobbyNamePanel = new JPanel();
-        // joinLobbyNamePanel.add(lobbyNameLabel);
-        // joinLobbyNamePanel.add(lobbyNameField);
+        joinUNPanel.add(joinUserNameField);
 
         JPanel joinInputPanels = new JPanel();
         joinInputPanels.setLayout(new BoxLayout(joinInputPanels, BoxLayout.Y_AXIS));
         joinInputPanels.add(joinUNPanel);
-        // joinInputPanels.add(joinLobbyNamePanel);
 
         // add fields and button to panel
         joinPanel.add(joinTitleLabel);
@@ -200,24 +205,24 @@ public class GUI {
             joinLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
                 .addComponent(joinTitleLabel)
                 .addComponent(joinInputPanels)
-                .addComponent(backButton)
+                .addComponent(joinBackButton)
                 .addComponent(joinButton)
         );
         joinLayout.setVerticalGroup(
             joinLayout.createSequentialGroup()
                 .addComponent(joinTitleLabel)
                 .addComponent(joinInputPanels)
-                .addComponent(backButton)
+                .addComponent(joinBackButton)
                 .addComponent(joinButton)
         );
         
 
     /** INITIAL STATE SETUP DO NOT TOUCH */
 
-        backButton.addActionListener(e -> swapPanel("menu"));
+        hostBackButton.addActionListener(e -> swapPanel("menu"));
+        joinBackButton.addActionListener(e -> swapPanel("menu"));
 
         frame.pack();
-
         frame.setPreferredSize(SCREEN_SIZE);
         frame.setMaximumSize(SCREEN_SIZE);
         frame.setMinimumSize(SCREEN_SIZE);
@@ -242,8 +247,16 @@ public class GUI {
         return menuQuitButton;
     }
 
-    public JTextField getUserNameField() {
-        return userNameField;
+    public JButton getMenuHostGameButton() {
+        return menuHostGameButton;
+    }
+
+    public JButton getMenuJoinGameButton() {
+        return menuConnectGameButton;
+    }
+
+    public JTextField getUserNameField(char hc) {
+        return hc == 'h' ? hostUserNameField : joinUserNameField;
     }
 
     public JTextField getLobbyNameField() {
@@ -254,42 +267,35 @@ public class GUI {
         return serverHostIPField;
     }
 
+    public JTextField getServerHostPortField() {
+        return serverHostPortField;
+    }
+
     public void swapPanel(String newPanel) {
+        System.out.println("Swapping to " + newPanel);
+        frame.getContentPane().removeAll();
+
         if (newPanel.equals("menu")) {
-            // frame.setVisible(false);
-            // frame.setContentPane(menuPanel);
-            frame.getContentPane().removeAll();
             frame.getContentPane().add(menuPanel);
-            frame.getContentPane().revalidate();
-            frame.getContentPane().repaint();
-            frame.setVisible(true);
 
         }
         else if (newPanel.equals("host")) {
-            frame.getContentPane().removeAll();
             frame.getContentPane().add(hostPanel);
-            frame.getContentPane().revalidate();
-            frame.getContentPane().repaint();
-            frame.setVisible(true);
         }
         else if (newPanel.equals("join")) {
-            frame.getContentPane().removeAll();
-            frame.getContentPane().add(hostPanel);
-            frame.getContentPane().revalidate();
-            frame.getContentPane().repaint();
-            frame.setVisible(true);
+            frame.getContentPane().add(joinPanel);
 
         }
         else if (newPanel.equals("game")) {
-            frame.getContentPane().removeAll();
-            frame.getContentPane().add(hostPanel);
-            frame.getContentPane().revalidate();
-            frame.getContentPane().repaint();
-            frame.setVisible(true);
+            frame.getContentPane().add(gamePanel);
 
         }
         else {
             System.out.println("Unknown panel '" + newPanel + "'");
         }
+        frame.getContentPane().revalidate();
+        frame.getContentPane().repaint();
+        frame.setVisible(true);
+
     }
 }
