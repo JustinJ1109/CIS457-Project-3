@@ -1,4 +1,6 @@
 
+package surroundpack;
+
 
 /**
  * Contains individual cell properties. What does a cell do?
