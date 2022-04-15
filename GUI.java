@@ -4,27 +4,36 @@ import javax.swing.*;
 
 public class GUI {
 
-    private final Dimension SCREEN_SIZE = new Dimension(500, 600);
+    private final static Dimension SCREEN_SIZE = new Dimension(500, 600);
 
+    /** Frame that holds everything */
     private JFrame frame;
 
+    /** JButtons */
     private JButton 
         menuHostGameButton,
         menuConnectGameButton,
         menuQuitButton,
 
         startButton,
-        backButton;
+        backButton,
 
+        joinButton;
+
+    /** JPanels */
     private JPanel
+        conentPanel,
+
         menuPanel,
         joinPanel,
         hostPanel,
         gamePanel;
 
+    /** Text Fields (user input) */
     private JTextField
         lobbyNameField,
-        userNameField;
+        userNameField,
+        serverHostIPField;
 
     /**************************************************************
      * GUI constructor
@@ -48,16 +57,28 @@ public class GUI {
         menuPanel.setLayout(menuLayout);
 
         JLabel menuTitleLabel = new JLabel("Surround Game Online!");
+        JLabel menuServerHostIPLabel = new JLabel("Server IP");
+
         menuTitleLabel.setFont(new Font(menuTitleLabel.getFont().getName(), Font.PLAIN, 40));
 
         menuHostGameButton = new JButton("Host");
         menuConnectGameButton = new JButton("Join");
         menuQuitButton = new JButton("Quit");
 
+        // Text field
+        serverHostIPField = new JTextField();
+        serverHostIPField.setColumns(22);
+
+        JPanel serverConnectionInfoPanel = new JPanel();
+        serverConnectionInfoPanel.setLayout(new BoxLayout(serverConnectionInfoPanel, BoxLayout.Y_AXIS));
+        serverConnectionInfoPanel.add(menuServerHostIPLabel);
+        serverConnectionInfoPanel.add(serverHostIPField);
+
         menuPanel.add(menuTitleLabel);
         menuPanel.add(menuHostGameButton);
         menuPanel.add(menuConnectGameButton);
         menuPanel.add(menuQuitButton);
+        menuPanel.add(serverConnectionInfoPanel);
 
         menuLayout.setHorizontalGroup(
             menuLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
@@ -65,6 +86,8 @@ public class GUI {
                 .addComponent(menuHostGameButton)
                 .addComponent(menuConnectGameButton)
                 .addComponent(menuQuitButton)
+
+                .addComponent(serverConnectionInfoPanel)
         );
         menuLayout.setVerticalGroup(
             menuLayout.createSequentialGroup()
@@ -72,6 +95,9 @@ public class GUI {
                 .addComponent(menuHostGameButton)
                 .addComponent(menuConnectGameButton)
                 .addComponent(menuQuitButton)
+
+                .addComponent(serverConnectionInfoPanel)
+        
         );
 
         menuHostGameButton.addActionListener(e -> swapPanel("host"));
@@ -99,7 +125,6 @@ public class GUI {
         startButton = new JButton("Start Game");
         backButton = new JButton("Back");
 
-        backButton.addActionListener(e -> swapPanel("menu"));
 
         JPanel hostUNPanel = new JPanel();
         hostUNPanel.add(userNameLabel);
@@ -133,10 +158,65 @@ public class GUI {
                 .addComponent(backButton)
                 .addComponent(startButton)
         );
+
+    /** JOIN LAYOUT */
+
+        GroupLayout joinLayout = new GroupLayout(joinPanel);
+        joinLayout.setAutoCreateGaps(true);
+        joinLayout.setAutoCreateContainerGaps(true);
+        joinPanel.setLayout(joinLayout);
+
+        JLabel joinTitleLabel = new JLabel("Join a Game");
+        JLabel joiningUserNameLabel = new JLabel("User Name");
+
+        userNameField = new JTextField();
+        userNameField.setColumns(22);
+
+        joinTitleLabel.setFont(new Font(joinTitleLabel.getFont().getName(), Font.PLAIN, 40));
+
+        // add text fields and start button
+        joinButton = new JButton("Join Game");
+
+
+        JPanel joinUNPanel = new JPanel();
+        joinUNPanel.add(joiningUserNameLabel);
+        joinUNPanel.add(userNameField);
+
+        // JPanel joinLobbyNamePanel = new JPanel();
+        // joinLobbyNamePanel.add(lobbyNameLabel);
+        // joinLobbyNamePanel.add(lobbyNameField);
+
+        JPanel joinInputPanels = new JPanel();
+        joinInputPanels.setLayout(new BoxLayout(joinInputPanels, BoxLayout.Y_AXIS));
+        joinInputPanels.add(joinUNPanel);
+        // joinInputPanels.add(joinLobbyNamePanel);
+
+        // add fields and button to panel
+        joinPanel.add(joinTitleLabel);
+        joinPanel.add(joinInputPanels);
+        joinPanel.add(joinButton);
+
+        joinLayout.setHorizontalGroup(
+            joinLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                .addComponent(joinTitleLabel)
+                .addComponent(joinInputPanels)
+                .addComponent(backButton)
+                .addComponent(joinButton)
+        );
+        joinLayout.setVerticalGroup(
+            joinLayout.createSequentialGroup()
+                .addComponent(joinTitleLabel)
+                .addComponent(joinInputPanels)
+                .addComponent(backButton)
+                .addComponent(joinButton)
+        );
         
 
     /** INITIAL STATE SETUP DO NOT TOUCH */
-        frame.getContentPane().add(menuPanel);
+
+        backButton.addActionListener(e -> swapPanel("menu"));
+
+        frame.pack();
 
         frame.setPreferredSize(SCREEN_SIZE);
         frame.setMaximumSize(SCREEN_SIZE);
@@ -144,11 +224,18 @@ public class GUI {
         frame.setResizable(false);
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        swapPanel("menu");
+
         frame.setVisible(true);
     }
 
     public JButton getStartButton() {
         return startButton;
+    }
+
+    public JButton getJoinButton() {
+        return joinButton;
     }
 
     public JButton getMenuQuitButton() {
@@ -163,27 +250,41 @@ public class GUI {
         return lobbyNameField;
     }
 
+    public JTextField getServerHostIPField() {
+        return serverHostIPField;
+    }
+
     public void swapPanel(String newPanel) {
         if (newPanel.equals("menu")) {
-            frame.setVisible(false);
-            frame.setContentPane(menuPanel);
-            frame.setVisible(true);
-        }
-        else if (newPanel.equals("host")) {
-            frame.setVisible(false);
-            frame.setContentPane(hostPanel);
+            // frame.setVisible(false);
+            // frame.setContentPane(menuPanel);
+            frame.getContentPane().removeAll();
+            frame.getContentPane().add(menuPanel);
+            frame.getContentPane().revalidate();
+            frame.getContentPane().repaint();
             frame.setVisible(true);
 
         }
+        else if (newPanel.equals("host")) {
+            frame.getContentPane().removeAll();
+            frame.getContentPane().add(hostPanel);
+            frame.getContentPane().revalidate();
+            frame.getContentPane().repaint();
+            frame.setVisible(true);
+        }
         else if (newPanel.equals("join")) {
-            frame.setVisible(false);
-            frame.setContentPane(joinPanel);
+            frame.getContentPane().removeAll();
+            frame.getContentPane().add(hostPanel);
+            frame.getContentPane().revalidate();
+            frame.getContentPane().repaint();
             frame.setVisible(true);
 
         }
         else if (newPanel.equals("game")) {
-            frame.setVisible(false);
-            frame.setContentPane(gamePanel);
+            frame.getContentPane().removeAll();
+            frame.getContentPane().add(hostPanel);
+            frame.getContentPane().revalidate();
+            frame.getContentPane().repaint();
             frame.setVisible(true);
 
         }
