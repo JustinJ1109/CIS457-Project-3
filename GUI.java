@@ -33,11 +33,15 @@ public class GUI {
 
     /** Text Fields (user input) */
     private JTextField
-        lobbyNameField,
         hostUserNameField,
+
         joinUserNameField,
         serverHostIPField,
         serverHostPortField;
+
+    private JComboBox 
+        numPlayersBox,
+        boardSizeBox;
 
     /**************************************************************
      * GUI constructor
@@ -119,53 +123,73 @@ public class GUI {
         hostPanel.setLayout(hostLayout);
 
         JLabel hostTitleLabel = new JLabel("Host a Game");
-        JLabel userNameLabel = new JLabel("User Name");
-        JLabel lobbyNameLabel = new JLabel("Lobby Name");
-
-        hostUserNameField = new JTextField();
-        lobbyNameField = new JTextField();
-
-        hostUserNameField.setColumns(22);
-        lobbyNameField.setColumns(22);
-
         hostTitleLabel.setFont(new Font(hostTitleLabel.getFont().getName(), Font.PLAIN, 40));
+
+        // Labels
+        JLabel userNameLabel = new JLabel("User Name");
+        JLabel hostBoardSizeLabel = new JLabel("Board Size");
+        JLabel hostNumPlayersLabel = new JLabel("Number of Players");
+
+        // Combo Box contents
+        String boardSizes[] = {"6x6", "8x8", "10x10", "12x12", "16x16"};
+        String numPlayers[] = {"2", "3", "4", "5"};
+
+        // Combo Boxes
+        boardSizeBox = new JComboBox<>(boardSizes);
+        numPlayersBox = new JComboBox<>(numPlayers);
+
+        // default to 10x10
+        boardSizeBox.setSelectedIndex(2);
+
+        // Name field
+        hostUserNameField = new JTextField();
+        hostUserNameField.setColumns(22);
 
         // add text fields and start button
         startButton = new JButton("Start Game");
         hostBackButton = new JButton("Back");
 
-
+        // Sub-panel for username
         JPanel hostUNPanel = new JPanel();
         hostUNPanel.add(userNameLabel);
         hostUNPanel.add(hostUserNameField);
 
-        JPanel hostLobbyNamePanel = new JPanel();
-        hostLobbyNamePanel.add(lobbyNameLabel);
-        hostLobbyNamePanel.add(lobbyNameField);
+        // Sub-panel for board size box
+        JPanel hostBoardSizePanel = new JPanel();
+        hostBoardSizePanel.add(hostBoardSizeLabel);
+        hostBoardSizePanel.add(boardSizeBox);
 
-        JPanel hostInputPanels = new JPanel();
-        hostInputPanels.setLayout(new BoxLayout(hostInputPanels, BoxLayout.Y_AXIS));
-        hostInputPanels.add(hostUNPanel);
-        hostInputPanels.add(hostLobbyNamePanel);
+        // Sub-panel for num players box
+        JPanel hostNumPlayersPanel = new JPanel();
+        hostNumPlayersPanel.add(hostNumPlayersLabel);
+        hostNumPlayersPanel.add(numPlayersBox);
 
         // add fields and button to panel
         hostPanel.add(hostTitleLabel);
-        hostPanel.add(hostInputPanels);
+        hostPanel.add(hostUNPanel);
         hostPanel.add(startButton);
+        hostPanel.add(hostBoardSizePanel);
+        hostPanel.add(hostNumPlayersPanel);
 
         hostLayout.setHorizontalGroup(
             hostLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
                 .addComponent(hostTitleLabel)
-                .addComponent(hostInputPanels)
+                .addComponent(hostUNPanel)
+                .addComponent(hostBoardSizePanel)
+                .addComponent(hostNumPlayersPanel)
                 .addComponent(hostBackButton)
                 .addComponent(startButton)
+                
         );
         hostLayout.setVerticalGroup(
             hostLayout.createSequentialGroup()
                 .addComponent(hostTitleLabel)
-                .addComponent(hostInputPanels)
+                .addComponent(hostUNPanel)
+                .addComponent(hostBoardSizePanel)
+                .addComponent(hostNumPlayersPanel)
                 .addComponent(hostBackButton)
                 .addComponent(startButton)
+                
         );
 
     /** JOIN LAYOUT */
@@ -259,10 +283,6 @@ public class GUI {
         return hc == 'h' ? hostUserNameField : joinUserNameField;
     }
 
-    public JTextField getLobbyNameField() {
-        return lobbyNameField;
-    }
-
     public JTextField getServerHostIPField() {
         return serverHostIPField;
     }
@@ -271,6 +291,19 @@ public class GUI {
         return serverHostPortField;
     }
 
+    public JComboBox getNumPlayersBox() {
+        return numPlayersBox;
+    }
+
+    public JComboBox getBoardSizeBox() {
+        return boardSizeBox;
+    }
+
+    /****************************************************************
+     * Display new panel on screen when event is triggered
+     * 
+     * @param newPanel
+     ***************************************************************/
     public void swapPanel(String newPanel) {
         System.out.println("Swapping to " + newPanel);
         frame.getContentPane().removeAll();

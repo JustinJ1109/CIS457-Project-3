@@ -5,13 +5,10 @@ public class ClientController {
     private GUI gui;
     private ClientModel model;
     private String serverHostIP;
-    private boolean connectedToServer;
 
     public ClientController(ClientModel model, GUI gui) {
         this.gui = gui;
         this.model = model;
-
-        connectedToServer = false;
     }
 
     public void initController() {
@@ -51,15 +48,15 @@ public class ClientController {
 
     }
 
-    private void disconnectFromServer() {
-        connectedToServer = false;
-    }
-
-    /** tell client to open a new game with client's input info */
+    /****************************************************************
+     * Receive data from user GUI input. Validate info received 
+     * and send to model. Tell model to send request to server
+     ***************************************************************/
     private void hostGame() {
         // check if info is correct first
         String userName = gui.getUserNameField('h').getText();
-        String lobbyName = gui.getLobbyNameField().getText();
+        String boardSize = gui.getBoardSizeBox().getSelectedItem().toString();
+        String numPlayers = gui.getNumPlayersBox().getSelectedItem().toString();
 
         if (userName.equals("")) {
             System.out.println("Must input a username");
@@ -69,19 +66,11 @@ public class ClientController {
             System.out.println("Username cannot contain spaces");
             return;
         }
-
-        if (lobbyName.equals("")) {
-            System.out.println("Must input a lobby name");
-            return;
-        }
-        if (lobbyName.contains(" ")) {
-            System.out.println("Lobby name cannot contain spaces");
-        }
         
         model.setUserName(userName);
 
         try {
-            model.hostGame(lobbyName);
+            model.hostGame();
         }
         catch (Exception e) {
             System.out.println("Could not Host game on server:");
@@ -89,20 +78,27 @@ public class ClientController {
         }
 
         gui.getUserNameField('h').setText("");
-        gui.getLobbyNameField().setText("");
+        
 
-        System.out.println("Hosting");
-        gui.swapPanel("game");
+        System.out.println("Hosting a game of " + numPlayers + " players on board size " + boardSize + " for " + userName);
+
+
+        //gui.swapPanel("game");
     }
 
-    /** tell server to join selected game */
+    /****************************************************************
+     * Pretty much the same as the hostGame, minus the boardSize,
+     * numPlayers fields.
+     ***************************************************************/
     private void joinGame() {
         // check if info is correct first
         System.out.println("Joining");
 
     }
 
-    /** cleanup and close the client **/
+    /****************************************************************
+     * Tell model to request disconnect, cleanup, then disconnect this
+     ***************************************************************/
     private void quitGame() {
         // check that all is cleaned up before quitting
         System.out.println("Quitting");
@@ -110,12 +106,6 @@ public class ClientController {
 
         System.exit(0);
     }
-
-    /** Send a command to the server to update the list of available games to join **/
-    private void refreshLobby() {
-
-    }
-
 
     public static void main(String[] args) {
         GUI gui = new GUI("test");

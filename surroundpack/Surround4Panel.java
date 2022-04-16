@@ -9,15 +9,15 @@ public class Surround4Panel extends JPanel {
     private JButton[][] board;
 
     private JPanel panel1, panel2, panel3;
-    private int boardSize, numPlayers, startingPlayer, lastRow, lastCol;
-    private boolean undoStatus;
+    private int 
+        boardSize, numPlayers, startingPlayer, 
+        lastRow, lastCol;
+
     private ButtonListener listen;
     private Surround4Game game;
 
     private JLabel[] scoreLabels;
     private static int[] scores;
-
-
 
     public Surround4Panel() {
         
@@ -29,14 +29,9 @@ public class Surround4Panel extends JPanel {
         panel2 = new JPanel();
         panel3 = new JPanel();
 
-        String strBdSize = JOptionPane.showInputDialog (null,
-                "Enter in the size of the board: ");
-        if(strBdSize == null){
-            JOptionPane.showMessageDialog(null, "Game canceled");
-            System.exit(0);
-        }
         try {
-            boardSize = Integer.parseInt(strBdSize);
+            // FIXME: 
+            boardSize = 5;
             if(boardSize <= 3 || boardSize >= 20) {
                 //Jumps to catch statement
                 throw new NumberFormatException();
@@ -44,18 +39,11 @@ public class Surround4Panel extends JPanel {
         }
         catch(NumberFormatException e){
             JOptionPane.showMessageDialog(null,
-                    "Invalid input. Using board of size 10.");
-            boardSize = 10;
+                    "Invalid input.");
         }
 
-        String strNumPlayers = JOptionPane.showInputDialog (null,
-                "Enter the number of players: ");
-        if(strNumPlayers == null){
-            JOptionPane.showMessageDialog(null, "Game canceled");
-            System.exit(0);
-        }
         try {
-            numPlayers = Integer.parseInt(strNumPlayers);
+            numPlayers = 2;
             if(numPlayers < 2 || numPlayers > 99) {
                 //Jumps to catch statement
                 throw new NumberFormatException();
@@ -63,28 +51,12 @@ public class Surround4Panel extends JPanel {
         }
         catch(NumberFormatException e){
             JOptionPane.showMessageDialog(null,
-                    "Invalid input. Using 2 players.");
-            numPlayers = 2;
+                    "Invalid input.");
         }
-
-        String strStartingPlayer = JOptionPane.showInputDialog(null,
-                "Who starts first?");
-        if(strStartingPlayer == null){
-            JOptionPane.showMessageDialog(null, "Game canceled");
-            System.exit(0);
-        }
-        try{
-            startingPlayer = Integer.parseInt(strStartingPlayer);
-            if(startingPlayer < 0 || startingPlayer > numPlayers - 1){
-                //Jumps to catch statement
-                throw new NumberFormatException();
-            }
-        }
-        catch(NumberFormatException e ){
-            JOptionPane.showMessageDialog(null,
-                    "Invalid input. Starting with Player 0.");
-            startingPlayer = 0;
-        }
+        
+        startingPlayer = 0;
+        
+        
 
         createScores();
 
@@ -186,7 +158,6 @@ public class Surround4Panel extends JPanel {
                         if (game.select(row, col)) {
                             lastRow = row;
                             lastCol = col;
-                            undoStatus = true;
 
                             game.nextPlayer();
                         }
@@ -216,7 +187,6 @@ public class Surround4Panel extends JPanel {
                     }
                 }
                 displayBoard();
-                undoStatus = false;
             }
         }
     }
