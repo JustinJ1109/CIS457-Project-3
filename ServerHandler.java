@@ -1,12 +1,16 @@
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.sql.Date;
+import java.text.SimpleDateFormat;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
 public class ServerHandler extends Thread {
 	
 	private Socket connectionSocket;
+	private SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
+
 
 	protected static Vector<PlayerInfo> currentPlayers = new Vector<PlayerInfo>();
 	
@@ -20,6 +24,7 @@ public class ServerHandler extends Thread {
 	
 	private boolean welcome;
 	private boolean running;
+	private boolean hosting;
 
 	// info receieved from host
 	private int maxPlayers;
@@ -41,26 +46,25 @@ public class ServerHandler extends Thread {
 
 		welcome = true;
 		running = true;
-		System.out.println("Connection created " + connectionSocket.getInetAddress() + " on port " + 
-			connectionSocket.getLocalPort() + " to port " + connectionSocket.getPort());
+		clientAddress = connectionSocket.getInetAddress();
 	}
 	
 	public void run() {
 		try {
 		    while(running) {
 		        if (welcome) {
-		            System.out.println("welcoming user");
 		            connectUser(inFromClient.readUTF());
 		        }
 		        else {
-		            System.out.println("processing request");
 		            waitForRequest();
 		        }       
 		    }
 
 		} 
 		catch (Exception e) {
-		    e.printStackTrace();
+			printDate();
+			System.out.println("User disconnected " + clientAddress.toString());
+		    // e.printStackTrace();
         }
 	}
 	
@@ -69,7 +73,7 @@ public class ServerHandler extends Thread {
 	 * Receives data from user, adds them as a current player, and 
 	 * initializes input control stream from client
 	 * 
-	 * @param userInfo User info of format: "hostName port"
+	 * @param userInfo User info of format: "hostName port userName"
 	 * @throws Exception
 	 ***************************************************************/
 	private void connectUser(String userInfo) throws Exception {
@@ -81,13 +85,14 @@ public class ServerHandler extends Thread {
 		int port = Integer.parseInt(tokenizer.nextToken());
 		String userName = tokenizer.nextToken();
 
+
 		PlayerInfo p = new PlayerInfo(hostName, port, userName);
 		addPlayer(p);
-
-		System.out.println("Data receieved: " + hostName + " " + port + " " + userName);
 		inFromClient = new DataInputStream(new BufferedInputStream(this.connectionSocket.getInputStream()));
 
-		System.out.println("Done connecting");
+		printDate();
+		System.out.println("User " + hostName + ":" + port + " connected");
+		
 	}
 	
 	/****************************************************************
@@ -118,19 +123,30 @@ public class ServerHandler extends Thread {
 	 * @throws Exception
 	 ***************************************************************/
 	private void processRequest(String clientCommand) throws Exception {
+
+		Socket dataSocket;
 		String firstLine;
+		printDate();
 		System.out.println("Processing " + clientCommand + " from client");
 		StringTokenizer tokens = new StringTokenizer(clientCommand);
 
 		firstLine = tokens.nextToken();
-		port = Integer.parseInt(firstLine);
+
+		try {
+			port = Integer.parseInt(firstLine);
+		}
+		catch (Exception e) {
+			System.out.println("ERROR Could not parse " + port + " as int");
+			return;
+		}
+
 		clientCommand = tokens.nextToken();
 
 		if (clientCommand.equals("place")) {
 			// port command x y
 			int x, y;
 
-			Socket dataSocket = new Socket(connectionSocket.getInetAddress(), port);
+			dataSocket = new Socket(connectionSocket.getInetAddress(), port);
 			dataOutToClient = new DataOutputStream(dataSocket.getOutputStream());
 
 			try {
@@ -138,15 +154,72 @@ public class ServerHandler extends Thread {
 				y = Integer.parseInt(tokens.nextToken());
 			}
 			catch (Exception e) {
-				System.err.println("\nReceived invalid x or y coord x\n");
-				e.printStackTrace();
+				System.err.println("\tReceived invalid x or y coord x");
 				dataOutToClient.writeUTF("INVALID_COORD");
 				return;
 			}
 
 		}
-		else if (clientCommand.equals("newgame")) {
+		else if (clientCommand.equals("host")) {
 
+			
+			// do something with this
+			int boardSize, numPlayers;
+
+			dataSocket = new Socket(connectionSocket.getInetAddress(), port);
+			dataOutToClient = new DataOutputStream(dataSocket.getOutputStream());
+
+			try {
+				numPlayers = Integer.parseInt(tokens.nextToken());
+				boardSize = Integer.parseInt(tokens.nextToken());
+			}
+			catch (NumberFormatException e) {
+				System.out.println("\tUnable to convert numPlayers or boardSize to int");
+				return;
+			}
+
+			
+			dataOutToClient.writeUTF("SUCCESS");
+			
+
+			dataOutToClient.close();
+			dataSocket.close();
+
+
+		}
+
+		else if (clientCommand.equals("join")) {
+
+		}
+
+		// player left lobby
+		else if (clientCommand.equals("leave") || clientCommand.equals("end-host")) {
+			//remove player from list
+			if (clientCommand.equals("end-host")) {
+				hosting = false;
+			}
+		}
+
+		else if (clientCommand.equals("start-game")) {
+			hosting = true;
+
+		}
+
+		else if (clientCommand.equals("get-players")) {
+
+			dataSocket = new Socket(connectionSocket.getInetAddress(), port);
+
+			ObjectOutputStream ois = new ObjectOutputStream(dataSocket.getOutputStream());
+			try {
+				ois.writeObject(currentPlayers);
+			}
+			catch (Exception e) {
+				System.err.println("Could not write current players to stream");
+			}
+
+			ois.close();
+			dataSocket.close();
+			
 		}
 		else if (clientCommand.equals("disconnect")) {
 
@@ -182,5 +255,10 @@ public class ServerHandler extends Thread {
 	 ***************************************************************/
 	private void setCurrentPlayer(int currentPlayer) {
 		this.currentPlayer = currentPlayer;
+	}
+
+	private void printDate() {
+		Date date = new Date(System.currentTimeMillis());
+		System.out.print("[" + formatter.format(date) + "] ");
 	}
 }	

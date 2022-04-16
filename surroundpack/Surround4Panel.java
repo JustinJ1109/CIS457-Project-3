@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.*;
 
+
 public class Surround4Panel extends JPanel {
 
     private JButton[][] board;
@@ -18,6 +19,8 @@ public class Surround4Panel extends JPanel {
 
     private JLabel[] scoreLabels;
     private static int[] scores;
+
+    private Color[] playerColors = {Color.RED, Color.BLUE, Color.YELLOW, Color.GREEN, Color.ORANGE};
 
     public Surround4Panel() {
         
@@ -240,6 +243,6 @@ public class Surround4Panel extends JPanel {
 
     private void displayScores() {
         for(int i = 0; i < scores.length; i++)
-            scoreLabels[i].setText("Player " + i + ":   " + scores[i] + "     ");
+            scoreLabels[i].setForeground(playerColors[i]);
     }
 }

@@ -1,6 +1,8 @@
 
 import java.awt.*;
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+
 import surroundpack.Surround4Panel;
 
 public class GUI {
@@ -20,28 +22,32 @@ public class GUI {
         hostBackButton,
         joinBackButton,
 
-        joinButton;
+        joinButton,
+
+        refreshButton,
+        lobbyBackButton,
+        playButton;
 
     /** JPanels */
     private JPanel
-        conentPanel,
-
         menuPanel,
         joinPanel,
         hostPanel,
+        lobbyPanel,
         gamePanel;
 
     /** Text Fields (user input) */
     private JTextField
-        hostUserNameField,
+        userNameField,
 
-        joinUserNameField,
         serverHostIPField,
         serverHostPortField;
 
     private JComboBox 
         numPlayersBox,
         boardSizeBox;
+
+    private JTable lobbyTable;
 
     /**************************************************************
      * GUI constructor
@@ -56,6 +62,7 @@ public class GUI {
         menuPanel = new JPanel();
         joinPanel = new JPanel();
         hostPanel = new JPanel();
+        lobbyPanel = new JPanel();
         gamePanel = new Surround4Panel();
 
     /** MENU LAYOUT */
@@ -67,6 +74,7 @@ public class GUI {
         JLabel menuTitleLabel = new JLabel("Surround Game Online!");
         JLabel menuServerHostIPLabel = new JLabel("Server IP");
         JLabel menuServerPortLabel = new JLabel("Server Port");
+        JLabel menuUserNameLabel = new JLabel("Username");
 
         menuTitleLabel.setFont(new Font(menuTitleLabel.getFont().getName(), Font.PLAIN, 40));
 
@@ -75,10 +83,17 @@ public class GUI {
         menuQuitButton = new JButton("Quit");
 
         // Text field
+        userNameField = new JTextField();
         serverHostIPField = new JTextField();
         serverHostPortField = new JTextField();
+
+        userNameField.setColumns(22);
         serverHostIPField.setColumns(22);
         serverHostPortField.setColumns(22);
+
+        JPanel userNamePanel = new JPanel();
+        userNamePanel.add(menuUserNameLabel);
+        userNamePanel.add(userNameField);
 
         JPanel serverConnectionIPPanel = new JPanel();
         serverConnectionIPPanel.add(menuServerHostIPLabel);
@@ -92,6 +107,7 @@ public class GUI {
         menuPanel.add(menuHostGameButton);
         menuPanel.add(menuConnectGameButton);
         menuPanel.add(menuQuitButton);
+        menuPanel.add(userNamePanel);
         menuPanel.add(serverConnectionIPPanel);
         menuPanel.add(serverConnectionPortPanel);
 
@@ -102,6 +118,7 @@ public class GUI {
                 .addComponent(menuConnectGameButton)
                 .addComponent(menuQuitButton)
 
+                .addComponent(userNamePanel)
                 .addComponent(serverConnectionIPPanel)
                 .addComponent(serverConnectionPortPanel)
         );
@@ -111,6 +128,8 @@ public class GUI {
                 .addComponent(menuHostGameButton)
                 .addComponent(menuConnectGameButton)
                 .addComponent(menuQuitButton)
+
+                .addComponent(userNamePanel)
 
                 .addComponent(serverConnectionIPPanel)
                 .addComponent(serverConnectionPortPanel)
@@ -126,7 +145,6 @@ public class GUI {
         hostTitleLabel.setFont(new Font(hostTitleLabel.getFont().getName(), Font.PLAIN, 40));
 
         // Labels
-        JLabel userNameLabel = new JLabel("User Name");
         JLabel hostBoardSizeLabel = new JLabel("Board Size");
         JLabel hostNumPlayersLabel = new JLabel("Number of Players");
 
@@ -141,18 +159,11 @@ public class GUI {
         // default to 10x10
         boardSizeBox.setSelectedIndex(2);
 
-        // Name field
-        hostUserNameField = new JTextField();
-        hostUserNameField.setColumns(22);
 
         // add text fields and start button
-        startButton = new JButton("Start Game");
+        startButton = new JButton("Host");
         hostBackButton = new JButton("Back");
 
-        // Sub-panel for username
-        JPanel hostUNPanel = new JPanel();
-        hostUNPanel.add(userNameLabel);
-        hostUNPanel.add(hostUserNameField);
 
         // Sub-panel for board size box
         JPanel hostBoardSizePanel = new JPanel();
@@ -166,7 +177,6 @@ public class GUI {
 
         // add fields and button to panel
         hostPanel.add(hostTitleLabel);
-        hostPanel.add(hostUNPanel);
         hostPanel.add(startButton);
         hostPanel.add(hostBoardSizePanel);
         hostPanel.add(hostNumPlayersPanel);
@@ -174,7 +184,6 @@ public class GUI {
         hostLayout.setHorizontalGroup(
             hostLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
                 .addComponent(hostTitleLabel)
-                .addComponent(hostUNPanel)
                 .addComponent(hostBoardSizePanel)
                 .addComponent(hostNumPlayersPanel)
                 .addComponent(hostBackButton)
@@ -184,7 +193,6 @@ public class GUI {
         hostLayout.setVerticalGroup(
             hostLayout.createSequentialGroup()
                 .addComponent(hostTitleLabel)
-                .addComponent(hostUNPanel)
                 .addComponent(hostBoardSizePanel)
                 .addComponent(hostNumPlayersPanel)
                 .addComponent(hostBackButton)
@@ -200,10 +208,6 @@ public class GUI {
         joinPanel.setLayout(joinLayout);
 
         JLabel joinTitleLabel = new JLabel("Join a Game");
-        JLabel joiningUserNameLabel = new JLabel("User Name");
-
-        joinUserNameField = new JTextField();
-        joinUserNameField.setColumns(22);
 
         joinTitleLabel.setFont(new Font(joinTitleLabel.getFont().getName(), Font.PLAIN, 40));
 
@@ -211,14 +215,8 @@ public class GUI {
         joinButton = new JButton("Join Game");
         joinBackButton = new JButton("Back");
 
-
-        JPanel joinUNPanel = new JPanel();
-        joinUNPanel.add(joiningUserNameLabel);
-        joinUNPanel.add(joinUserNameField);
-
         JPanel joinInputPanels = new JPanel();
         joinInputPanels.setLayout(new BoxLayout(joinInputPanels, BoxLayout.Y_AXIS));
-        joinInputPanels.add(joinUNPanel);
 
         // add fields and button to panel
         joinPanel.add(joinTitleLabel);
@@ -239,12 +237,63 @@ public class GUI {
                 .addComponent(joinBackButton)
                 .addComponent(joinButton)
         );
+
+    /** LOBBY LAYOUT */
+
+        GroupLayout lobbyLayout = new GroupLayout(lobbyPanel);
+        lobbyLayout.setAutoCreateGaps(true);
+        lobbyLayout.setAutoCreateContainerGaps(true);
+        lobbyPanel.setLayout(lobbyLayout);
+
+        JLabel lobbyTitleLabel = new JLabel("Lobby");
+
+
+        lobbyTitleLabel.setFont(new Font(lobbyTitleLabel.getFont().getName(), Font.PLAIN, 40));
+
+        // add text fields and start button
+        refreshButton = new JButton("Refresh");
+        playButton = new JButton("Play");
+        lobbyBackButton = new JButton("Back");
+
+        String[] colNames = {"User", "Player"};
+        String[][] initTableData = {{""}, {""}};
+
+        lobbyTable = new JTable(initTableData, colNames);
+        lobbyTable.setPreferredScrollableViewportSize(lobbyTable.getPreferredSize());
+
+        JScrollPane lobbyTablePane = new JScrollPane(lobbyTable);
+
+
+        // add fields and button to panel
+        lobbyPanel.add(lobbyTitleLabel);
+        lobbyPanel.add(refreshButton);
+        lobbyPanel.add(playButton);
+        lobbyPanel.add(lobbyBackButton);
+        lobbyPanel.add(lobbyTable);
+
+        lobbyLayout.setHorizontalGroup(
+            lobbyLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                .addComponent(lobbyTitleLabel)
+                .addComponent(refreshButton)
+                .addComponent(lobbyTablePane)
+                .addComponent(lobbyBackButton)
+                .addComponent(playButton)
+        );
+        lobbyLayout.setVerticalGroup(
+            lobbyLayout.createSequentialGroup()
+                .addComponent(lobbyTitleLabel)
+                .addComponent(refreshButton)
+                .addComponent(lobbyTablePane)
+                .addComponent(lobbyBackButton)
+                .addComponent(playButton)
+        );
         
 
     /** INITIAL STATE SETUP DO NOT TOUCH */
 
         hostBackButton.addActionListener(e -> swapPanel("menu"));
         joinBackButton.addActionListener(e -> swapPanel("menu"));
+        lobbyBackButton.addActionListener(e -> swapPanel("menu"));
 
         frame.pack();
         frame.setPreferredSize(SCREEN_SIZE);
@@ -279,8 +328,16 @@ public class GUI {
         return menuConnectGameButton;
     }
 
-    public JTextField getUserNameField(char hc) {
-        return hc == 'h' ? hostUserNameField : joinUserNameField;
+    public JButton getRefreshButton() {
+        return refreshButton;
+    }
+
+    public JButton getPlayButton() {
+        return playButton;
+    }
+
+    public JTextField getUserNameField() {
+        return userNameField;
     }
 
     public JTextField getServerHostIPField() {
@@ -299,6 +356,25 @@ public class GUI {
         return boardSizeBox;
     }
 
+    public JTable getLobbyTable() {
+        return lobbyTable;
+    }
+
+    public void updateLobbyTable(String[] data, int[] playerNum) {
+        lobbyTable.setModel(new DefaultTableModel());
+        DefaultTableModel tableModel = (DefaultTableModel) lobbyTable.getModel();
+        tableModel.setRowCount(0);
+
+        Object[] row = new Object[2];
+
+        for (int i = 0; i < data.length; i++) {
+            row[0] = data[i];
+            row[1] = playerNum[i];
+            tableModel.addRow(row);
+        }
+
+    }
+
     /****************************************************************
      * Display new panel on screen when event is triggered
      * 
@@ -310,18 +386,18 @@ public class GUI {
 
         if (newPanel.equals("menu")) {
             frame.getContentPane().add(menuPanel);
-
         }
         else if (newPanel.equals("host")) {
             frame.getContentPane().add(hostPanel);
         }
         else if (newPanel.equals("join")) {
             frame.getContentPane().add(joinPanel);
-
         }
         else if (newPanel.equals("game")) {
             frame.getContentPane().add(gamePanel);
-
+        }
+        else if (newPanel.equals("lobby")) {
+            frame.getContentPane().add(lobbyPanel);
         }
         else {
             System.out.println("Unknown panel '" + newPanel + "'");
@@ -329,6 +405,5 @@ public class GUI {
         frame.getContentPane().revalidate();
         frame.getContentPane().repaint();
         frame.setVisible(true);
-
     }
 }

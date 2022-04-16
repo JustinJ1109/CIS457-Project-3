@@ -4,7 +4,7 @@ import java.net.*;
 
 public class GameServer {
 
-    private static final int LISTENING_PORT = 44545;
+    private static final int LISTENING_PORT = 1370;
     
     public static void main(String[] args) throws IOException {
         ServerSocket serverSocket = null;
@@ -23,12 +23,11 @@ public class GameServer {
         while(listening) {
             try {
                 sh = new ServerHandler(serverSocket.accept());
-                System.out.println("Opening new Server Handler thread");
                 Thread t = new Thread(sh);
                 t.start();
             }
             catch (Exception e) {
-                System.out.println("Could not start thread");
+                System.out.println("Could not open thread");
                 e.printStackTrace();
             }
         }

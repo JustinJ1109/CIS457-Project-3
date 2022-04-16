@@ -1,8 +1,9 @@
+import java.io.Serializable;
 
-public class PlayerInfo {
+public class PlayerInfo implements Serializable {
 
     private String IP, userName;
-    private int port;
+    private int port, playerNumber;
     
     public PlayerInfo(String IP, int port, String userName) {
         this.IP = IP;
@@ -20,5 +21,13 @@ public class PlayerInfo {
 
     public int getPort() {
         return port;
+    }
+
+    public int getPlayerNumber() {
+        return playerNumber;
+    }
+
+    public void setPlayerNumber(int val) {
+        playerNumber = val;
     }
 }
