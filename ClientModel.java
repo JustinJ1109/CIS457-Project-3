@@ -1,7 +1,22 @@
+/**
+ * ClientModel.java
+ * 
+ * @version 4.17.22
+ * @author  Justin Jahlas, 
+ * 			Brennan Luttrel, 
+ * 			Munu Bhai, 
+ * 			Cole Blunt, 
+ * 			Noah Meyers
+ */
+
 import java.io.*; 
 import java.net.*;
 import java.util.*;
 
+/********************************************************************
+ * Main Client class responsible for communicating with the server,
+ * relaying info to GUI, and handling updates on client side.
+ *******************************************************************/
 public class ClientModel {
 
 	private final int controlPort = 1370;
@@ -19,6 +34,11 @@ public class ClientModel {
 
 	private GUI gui;
 
+	/****************************************************************
+	 * Initialize GUI button listeners
+	 * 
+	 * @param gui client gui class
+	 ***************************************************************/
 	public ClientModel(GUI gui) {
 		this.gui = gui;
 		gui.getHostStartButton().addActionListener(e -> hostGame());
@@ -27,9 +47,13 @@ public class ClientModel {
         gui.getMenuQuitButton().addActionListener(e -> quitGame());
 		gui.getRefreshButton().addActionListener(e -> updatePlayerList());
 		gui.getLobbyPlayButton().addActionListener(e -> play());
-		connectedToServer = false;
 	}
 
+	/****************************************************************
+	 * Check that IP and username is valid before allowing
+	 * 
+	 * @return true if valid, false otherwise
+	 ***************************************************************/
 	private boolean verifyConnectionInputs() {
 		serverHostIP = gui.getServerHostIPField().getText();
 
@@ -39,6 +63,7 @@ public class ClientModel {
             return false;
         }
 
+		// username cannot contain spaces or be empty
 		userName = gui.getUserNameField().getText();
 		if (userName.equals("") || userName.contains(" ")) {
 			System.out.println("Invalid username, cannot contain spaces and cannot be empty");		
@@ -47,7 +72,11 @@ public class ClientModel {
 		return true;
 	}
 
-    /** establish connection with server */
+    /****************************************************************
+	 * establish connection with server 
+	 * 
+	 * Open IO control sockets and send to server
+	 ***************************************************************/
     private boolean connectToServer(char hc) {
 
 		if (!connectedToServer) {
@@ -84,11 +113,11 @@ public class ClientModel {
 		return true;
     }
 
-	/** 
+	/****************************************************************
 	 * Join lobby in session
 	 * 
 	 * wait for server to broadcast start-game
-	 */
+	 ***************************************************************/
 	public void joinLobby() {
 
 		try {
@@ -158,7 +187,11 @@ public class ClientModel {
 
 	}
 
-	// call server to get updated playerList
+	/****************************************************************
+	 * Request server to send updated player list to update 
+	 * lobbyTable
+	 * 
+	 ***************************************************************/
 	@SuppressWarnings("unchecked")
 	private void updatePlayerList() {
 		System.out.println("refreshing...");
@@ -204,13 +237,19 @@ public class ClientModel {
 
 	}
 
-	/** establish connection with server, tell it to make a new game, connect client to that game */
+	/****************************************************************
+	 * Request server to host a new game. 
+	 * 
+	 * If there is already a host,
+	 * will be be denied. Else it will establish a newly hosted game
+	 * with server
+	 * 
+	 ****************************************************************/
     private void hostGame() {
 		try {
 			if (!connectToServer('h')) {
 				return;
 			}
-			
 
 			String command = "host";
 			port += 2;
@@ -246,11 +285,10 @@ public class ClientModel {
 		}
 	}
 
-	/** 
-	 * Tell server to remove self from player list, if hosting
-	 * Stop hosting, swap panel to menu, disconnect from server
+	/****************************************************************
+	 * Tell server client is leaving the lobby.
 	 * 
-	 */
+	 ***************************************************************/
 	private void leaveLobby() {
 		try {
 			String command;
@@ -293,11 +331,11 @@ public class ClientModel {
 		}
 	}
 
-	/** 
-	 * Client host starts game
+	/****************************************************************
+	 * Tell server host started the game
+	 * Set state to inGame
 	 * 
-	 * Send message to server to start game
-	 */
+	 ***************************************************************/
 	public void play() {
 		try {
 			String command = "play";
@@ -336,6 +374,11 @@ public class ClientModel {
 		}
 	}
 
+	/****************************************************************
+	 * Wait for server message
+	 * 
+	 * @throws Exception input stream was closed abruptly
+	 ***************************************************************/
 	private void waitForUpdate() throws Exception {
 		System.out.println("Awaiting broadcast...");
 		String fromServer = inFromServer.readUTF();
@@ -343,6 +386,12 @@ public class ClientModel {
 		processUpdate(fromServer);
 	}
 
+	/****************************************************************
+	 * Process the update received from the server. 
+	 * 	valid codes expected include:
+	 * 
+	 * @param serverCommand command and args received by server
+	 ***************************************************************/
 	private void processUpdate(String serverCommand) {
 		String firstLine;
 		StringTokenizer tokens = new StringTokenizer(serverCommand);
@@ -355,14 +404,7 @@ public class ClientModel {
 	}
 
 	/****************************************************************
-	 * Send a request to the server to place a tile at 
-	 * coordinates X Y
-	 * 
-	 * Open a data port, send new port and command to server, 
-	 * and wait for server to send a response
-	 * 
-	 * @param x x coordinate
-	 * @param y y coordinate
+	 * NOT IN USE YET
 	 ***************************************************************/
 	public void placeTile(int x, int y) {
 		String command = "place";
@@ -387,7 +429,11 @@ public class ClientModel {
 		}
 	}
 
-    /** close all IO streams and sockets, disconnect from server */
+    /****************************************************************
+	 * Tell server client is disconnecting. Close all sockets and 
+	 * IO streams
+	 * 
+	 ***************************************************************/
     public void disconnectFromServer() {
 		try {
 			String sentence = "disconnect";
@@ -398,16 +444,11 @@ public class ClientModel {
 
 			Socket dataSocket = welcomeData.accept();
 			DataInputStream inData = new DataInputStream(new BufferedInputStream(dataSocket.getInputStream()));
-			try {
-				String file = inData.readUTF();
-				System.out.println("Disconnect from server: " + file);
-				
-			}
-			catch (Exception e) {
-				System.out.println("Could not close server");
-				e.printStackTrace();
-			}
+			
 			connectedToServer = false;
+			inGame = false;
+			isHosting = false;
+
 			inData.close();
 			toServer.close();
 			dataSocket.close();
@@ -419,21 +460,13 @@ public class ClientModel {
 		}
  	}
 	
+	 /***************************************************************
+	  * User presses close button
+
+	  **************************************************************/
 	 public void quitGame() {
 		disconnectFromServer();
 		System.exit(0);
-	}
-
-    public void setUserName(String name) {
-        userName = name;
-    }
-
-	public void setServerHostIP(String ip) {
-		serverHostIP = ip;
-	}
-
-	public void setServerPort(int port) {
-		this.port = port;
 	}
 
 	public static void main(String[] args) {

@@ -1,7 +1,21 @@
+/**
+ * GameServer.java
+ * 
+ * @version 4.17.22
+ * @author  Justin Jahlas, 
+ * 			Brennan Luttrel, 
+ * 			Munu Bhai, 
+ * 			Cole Blunt, 
+ * 			Noah Meyers
+ */
+
 import java.io.IOException;
 import java.net.*;
 
-
+/********************************************************************
+ * Main Game Server that dispatches threads to handle every unique
+ * connection
+ *******************************************************************/
 public class GameServer {
 
     private static final int LISTENING_PORT = 1370;

@@ -1,3 +1,14 @@
+/**
+ * ServerHandler.java
+ * 
+ * @version 4.17.22
+ * @author  Justin Jahlas, 
+ * 			Brennan Luttrel, 
+ * 			Munu Bhai, 
+ * 			Cole Blunt, 
+ * 			Noah Meyers
+ */
+
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -7,6 +18,10 @@ import java.util.Enumeration;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
+/********************************************************************
+ * Dispatched class to handle each client's communication with the
+ * server. receives requests from clients and broadcasts to clients
+ *******************************************************************/
 public class ServerHandler extends Thread {
 	
 	private Socket connectionSocket;

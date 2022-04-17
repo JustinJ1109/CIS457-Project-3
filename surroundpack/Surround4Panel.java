@@ -1,10 +1,24 @@
+/**
+ * Surround4Panel.java
+ * 
+ * @version 4.17.22
+ * @author  Justin Jahlas, 
+ * 			Brennan Luttrel, 
+ * 			Munu Bhai, 
+ * 			Cole Blunt, 
+ * 			Noah Meyers
+ */
+
+
 package surroundpack;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.*;
 
-
+/********************************************************************
+ * Game GUI Panel
+ *******************************************************************/
 public class Surround4Panel extends JPanel {
 
     private JButton[][] board;

@@ -1,10 +1,22 @@
+/**
+ * GUI.java
+ * 
+ * @version 4.17.22
+ * @author  Justin Jahlas, 
+ * 			Brennan Luttrel, 
+ * 			Munu Bhai, 
+ * 			Cole Blunt, 
+ * 			Noah Meyers
+ */
 
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-
 import surroundpack.Surround4Panel;
 
+/********************************************************************
+ * Client GUI that displays all menus the user can navigate through.
+ *******************************************************************/
 public class GUI {
 
     private final static Dimension SCREEN_SIZE = new Dimension(500, 600);
@@ -277,7 +289,7 @@ public class GUI {
         );
         
 
-    /** INITIAL STATE SETUP DO NOT TOUCH */
+    /** INITIAL STATE SETUP DO NOT TOUCH BELOW **/
         hostBackButton.addActionListener(e -> swapPanel("menu"));
         joinBackButton.addActionListener(e -> swapPanel("menu"));
         menuHostGameButton.addActionListener(e -> swapPanel("host"));
@@ -297,6 +309,11 @@ public class GUI {
         frame.setVisible(true);
     }
 
+    /****************************************************************
+     * Getters and Setters for buttons, textfields, combobox, 
+     * and table
+     * 
+     ***************************************************************/
     public JButton getHostStartButton() {
         return hostStartButton;
     }
@@ -349,6 +366,15 @@ public class GUI {
         return lobbyTable;
     }
 
+    /****************************************************************
+     * Update the JTable with the input new data
+     * 
+     * DOESN'T WORK AND JTABLES ARE THE BANE OF MY EXISTENCE WHY IS
+     * IT SO HARD TO JUST UPDATE A TABLE
+     * 
+     * @param data
+     * @param playerNum
+     *******************************************************************/
     public void updateLobbyTable(String[] data, int[] playerNum) {
         lobbyTable.setModel(new DefaultTableModel());
         DefaultTableModel tableModel = (DefaultTableModel) lobbyTable.getModel();
@@ -364,6 +390,10 @@ public class GUI {
 
     }
 
+    //FIXME: doesnt work
+    /****************************************************************
+     * Remove the start button from non-host gui screen
+     *******************************************************************/
     public void rmStartButtonFromNonHost() {
         lobbyPanel.getLayout().removeLayoutComponent(lobbyPlayButton);
     }

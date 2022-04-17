@@ -1,5 +1,22 @@
+/**
+ * PlayerInfo.java
+ * 
+ * @version 4.17.22
+ * @author  Justin Jahlas, 
+ * 			Brennan Luttrel, 
+ * 			Munu Bhai, 
+ * 			Cole Blunt, 
+ * 			Noah Meyers
+ */
+
 import java.io.Serializable;
 
+/********************************************************************
+ * Struct-like class that just holds info about a player
+ * 
+ * includes: IP, userName, control port, player number, 
+ * and unique playerID
+ *******************************************************************/
 public class PlayerInfo implements Serializable {
 
     private String IP, userName;
