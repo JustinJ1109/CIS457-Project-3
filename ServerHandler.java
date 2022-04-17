@@ -3,9 +3,9 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.sql.Date;
 import java.text.SimpleDateFormat;
+import java.util.Enumeration;
 import java.util.StringTokenizer;
 import java.util.Vector;
-import java.util.concurrent.ThreadPoolExecutor.DiscardOldestPolicy;
 
 public class ServerHandler extends Thread {
 	
@@ -14,6 +14,8 @@ public class ServerHandler extends Thread {
 	
 	// list of all players currently connected and in lobby/game
 	protected static Vector<PlayerInfo> currentPlayers = new Vector<PlayerInfo>(0);
+
+	protected static Vector handlers = new Vector<>();
 
 	// track current valid player id
 	protected static int playerIDGen;
@@ -34,7 +36,7 @@ public class ServerHandler extends Thread {
 	private PlayerInfo p;
 
 	// this thread is the host
-	private boolean ishost;
+	private boolean isHost;
 
 	// there is already a host
 	public static Boolean hosting;
@@ -72,14 +74,16 @@ public class ServerHandler extends Thread {
 		if (hosting == null) {
 			hosting = false;
 		}
-		ishost = false;
+		isHost = false;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public void run() {
 		try {
 		    while(running) {
 		        if (welcome) {
 		            connectUser(inFromClient.readUTF());
+					handlers.addElement(this);
 		        }
 		        else {
 		            waitForRequest();
@@ -90,11 +94,27 @@ public class ServerHandler extends Thread {
 			printDate();
 			System.out.println("User lost connection " + clientAddress.toString());
 
+			if (isHost) {
+				isHost = false;
+				hosting = false;
+				removePlayer(p);
+			}
+
 			removePlayer(p);
 		    // e.printStackTrace();
         }
+		finally {
+			handlers.removeElement(this);
+
+			try {
+				connectionSocket.close();
+			}
+			catch (IOException e) {
+
+			}
+		}
 	}
-	
+
 	/****************************************************************
 	 * Opens the Control socket between a client and server
 	 * Receives data from user, adds them as a current player, and 
@@ -104,10 +124,10 @@ public class ServerHandler extends Thread {
 	 * @throws Exception
 	 ***************************************************************/
 	private void connectUser(String userInfo) throws Exception {
-		
+
 		welcome = false;
 		StringTokenizer tokenizer = new StringTokenizer(userInfo);
-		 
+
 		String hostName = tokenizer.nextToken();
 		int port = Integer.parseInt(tokenizer.nextToken());
 		String userName = tokenizer.nextToken();
@@ -115,15 +135,15 @@ public class ServerHandler extends Thread {
 
 		myPlayerID = playerIDGen;
 		playerIDGen++;
-		System.out.print("Assigning playerID " + myPlayerID);
+		// System.out.print("Assigning playerID " + myPlayerID);
 		p = new PlayerInfo(hostName, port, userName, myPlayerID);
 
 		inFromClient = new DataInputStream(new BufferedInputStream(this.connectionSocket.getInputStream()));
-
+		outToClient = new DataOutputStream(this.connectionSocket.getOutputStream());
 		printDate();
 		System.out.println("User " + hostName + ":" + port + " connected");
 	}
-	
+
 	/****************************************************************
 	 * Awaits a request from the user. Halts when none in control
 	 * stream
@@ -156,7 +176,7 @@ public class ServerHandler extends Thread {
 		Socket dataSocket;
 		String firstLine;
 		printDate();
-		System.out.println("Processing " + clientCommand + " from client");
+		System.out.print("[" + userName + "] sent command: " + clientCommand);
 		StringTokenizer tokens = new StringTokenizer(clientCommand);
 
 		firstLine = tokens.nextToken();
@@ -165,7 +185,7 @@ public class ServerHandler extends Thread {
 			port = Integer.parseInt(firstLine);
 		}
 		catch (Exception e) {
-			System.out.println("ERROR Could not parse " + port + " as int");
+			System.out.println("\nERROR Could not parse " + port + " as int");
 			return;
 		}
 
@@ -202,12 +222,12 @@ public class ServerHandler extends Thread {
 				maxPlayers = numPlayers;
 			}
 			catch (NumberFormatException e) {
-				System.out.println("\tUnable to convert numPlayers or boardSize to int");
+				System.out.println("\n\tUnable to convert numPlayers or boardSize to int");
 				return;
 			}
 
 			if (!hosting) {
-				ishost = true;
+				isHost = true;
 				hosting = true;
 
 				p.setPlayerNumber(0);
@@ -255,7 +275,7 @@ public class ServerHandler extends Thread {
 		// player left lobby
 		else if (clientCommand.equals("leave") || clientCommand.equals("end-host")) {
 			//remove player from list
-			if (clientCommand.equals("end-host") && ishost) {
+			if (clientCommand.equals("end-host") && isHost) {
 				hosting = false;
 			}
 
@@ -263,10 +283,8 @@ public class ServerHandler extends Thread {
 			dataOutToClient = new DataOutputStream(dataSocket.getOutputStream());
 
 			boolean rmSuccess = false;
-			System.out.println("looking for " + clientAddress.getHostAddress());
 
 			for (PlayerInfo p: currentPlayers) {
-				System.out.println("comparing to " + p.getIP());
 				if (p.getPlayerID() == myPlayerID) {
 					removePlayer(p);
 					rmSuccess = true;
@@ -285,8 +303,25 @@ public class ServerHandler extends Thread {
 			dataSocket.close();
 		}
 
-		else if (clientCommand.equals("start-game")) {
+		// Client host starts game
+		// broadcast to all clients to go to game panel and deliver first player
+		else if (clientCommand.equals("play")) {
+			dataSocket = new Socket(connectionSocket.getInetAddress(), port);
+			dataOutToClient = new DataOutputStream(dataSocket.getOutputStream());
 
+			// send message to all clients and tell player 0 goes first
+			if (isHost) {
+				dataOutToClient.writeUTF("SUCCESS");
+				broadcast("start-game " + currentPlayer);
+			}
+			else {
+				dataOutToClient.writeUTF("INVALID_HOST");
+				System.out.print(" DENIED");
+			}
+
+			
+			dataOutToClient.close();
+			dataSocket.close();
 		}
 
 		else if (clientCommand.equals("get-players")) {
@@ -325,9 +360,12 @@ public class ServerHandler extends Thread {
 			connectionSocket.close();
 			running = false;
 
+			System.out.println("");
 			printDate();
-			System.out.println("User disconnected " + clientAddress.getHostAddress());
+			System.out.print("\nUser disconnected " + userName + " " + clientAddress.getHostAddress());
 		}
+		System.out.println("");
+
 	}
 
 	/****************************************************************
@@ -347,6 +385,25 @@ public class ServerHandler extends Thread {
 			currentPlayers.remove(player);
 			}
 			catch(Exception e) {
+			}
+		}
+	}
+
+	private static void broadcast(String message) {
+		synchronized(handlers) {
+			Enumeration e = handlers.elements();
+
+			while (e.hasMoreElements()) {
+				ServerHandler sh = (ServerHandler) e.nextElement();
+
+				try {
+					sh.outToClient.flush();
+					sh.outToClient.writeUTF(message);
+				}
+				catch (Exception er) {
+					System.err.println("\nBroadcast failure\n");
+					er.printStackTrace();
+				}
 			}
 		}
 	}

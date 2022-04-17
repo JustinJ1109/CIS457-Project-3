@@ -1,30 +1,32 @@
 import java.io.*; 
 import java.net.*;
 import java.util.*;
-import java.util.ArrayList;
 
 public class ClientModel {
 
 	private final int controlPort = 1370;
+	private int port;
 
 	private boolean isHosting;
-
 	private boolean connectedToServer;
+	private boolean inGame;
 
 	private String serverHostIP, userName;
-	private int port;
 	private Socket ControlSocket;
+
 	private DataOutputStream toServer;
+	private DataInputStream inFromServer;
 
 	private GUI gui;
 
 	public ClientModel(GUI gui) {
 		this.gui = gui;
 		gui.getHostStartButton().addActionListener(e -> hostGame());
+		gui.getJoinStartButton().addActionListener(e -> joinLobby());
 		gui.getLobbyBackButton().addActionListener(e -> leaveLobby());
         gui.getMenuQuitButton().addActionListener(e -> quitGame());
 		gui.getRefreshButton().addActionListener(e -> updatePlayerList());
-		gui.getJoinStartButton().addActionListener(e -> joinLobby());
+		gui.getLobbyPlayButton().addActionListener(e -> play());
 		connectedToServer = false;
 	}
 
@@ -34,14 +36,6 @@ public class ClientModel {
         // Check that is IP format
         if (!serverHostIP.matches("(\\d{1,3}\\.){3}\\d{1,3}")) {
             System.out.println("Invalid IP");
-            return false;
-        }
-
-        try {
-            port = Integer.parseInt(gui.getServerHostPortField().getText());
-        }
-        catch(Exception e) {
-            System.out.println("Invalid port");
             return false;
         }
 
@@ -69,6 +63,7 @@ public class ClientModel {
 				System.out.println("You are connected to " + serverHostIP);
 
 				toServer = new DataOutputStream(ControlSocket.getOutputStream());
+				inFromServer = new DataInputStream(new BufferedInputStream(ControlSocket.getInputStream()));
 
 				String dataToServer = serverHostIP + " " + port + " " + userName;
 
@@ -89,6 +84,11 @@ public class ClientModel {
 		return true;
     }
 
+	/** 
+	 * Join lobby in session
+	 * 
+	 * wait for server to broadcast start-game
+	 */
 	public void joinLobby() {
 
 		try {
@@ -110,13 +110,35 @@ public class ClientModel {
 			boolean dc = false;
 
 			if (response.equals("SUCCESS")) {
+				gui.rmStartButtonFromNonHost();
 				gui.swapPanel("lobby");
+				
+				// await for server response in subthread
+				// lets user still interact with GUI, doesn't freeze
+				new Thread(new Runnable() {
+					@Override
+					public void run() {
+						try {
+							// while(!inGame && connectedToServer)
+							waitForUpdate();
+						}
+						catch (Exception e) {
+							
+							e.printStackTrace();
+						}
+
+						System.out.println("CLOSING SUBTHREAD");
+					}
+				}).start();
+							
 			}
 			else if (response.equals("LOBBY_LIMIT_REACHED")) {
 				System.out.println("Max players exceeded. Cannot join");
 			}
 			else if (response.equals("USERNAME_IN_USE")) {
 				System.out.println("Username in use. try another");
+				// disconnect user from server and let 
+				// them reconnect with diff uName
 				dc = true;
 			}
 			else if (response.equals("NO_HOST_AVAILABLE")) {
@@ -219,10 +241,16 @@ public class ClientModel {
 		}
 		catch (Exception e) {
 			System.out.println("Could not close streams");
+			disconnectFromServer();
 			e.printStackTrace();
 		}
 	}
 
+	/** 
+	 * Tell server to remove self from player list, if hosting
+	 * Stop hosting, swap panel to menu, disconnect from server
+	 * 
+	 */
 	private void leaveLobby() {
 		try {
 			String command;
@@ -233,13 +261,9 @@ public class ClientModel {
 				command = "leave";
 			}
 			port += 2;
-			String boardSizeDims = gui.getBoardSizeBox().getSelectedItem().toString();
-			// convert 10x10 to for server side parsing
-			int boardSize = Integer.parseInt(boardSizeDims.substring(0, boardSizeDims.indexOf("x")));
-			String numPlayers = gui.getNumPlayersBox().getSelectedItem().toString();
 
 			ServerSocket welcomeData = new ServerSocket(port);
-			String dataToServer = port + " " + command + " " + numPlayers + " " + boardSize;
+			String dataToServer = port + " " + command;
 
 			toServer.writeUTF(dataToServer);
 			System.out.println("Sending \'" + dataToServer + "\' to server");
@@ -262,20 +286,73 @@ public class ClientModel {
 			welcomeData.close();
 		}
 		catch (Exception e) {
-			System.out.println("Could not close streams");
+			System.out.println("Disconnected from server");
+			disconnectFromServer();
+			gui.swapPanel("menu");
 			e.printStackTrace();
 		}
 	}
 
+	/** 
+	 * Client host starts game
+	 * 
+	 * Send message to server to start game
+	 */
 	public void play() {
-		gui.swapPanel("game");
+		try {
+			String command = "play";
+			port += 2;
+
+			ServerSocket welcomeData = new ServerSocket(port);
+			String dataToServer = port + " " + command;
+
+			toServer.writeUTF(dataToServer);
+			System.out.println("Sending \'" + dataToServer + "\' to server");
+
+			Socket dataSocket = welcomeData.accept();
+			DataInputStream inData = new DataInputStream(new BufferedInputStream(dataSocket.getInputStream()));
+			String response = inData.readUTF();
+			if (response.equals("SUCCESS")) {
+				inGame = true;
+
+				// while(inGame) {
+				// 	waitForUpdate();
+				// }
+			}
+			else if (response.equals("INVALID_HOST")) {
+				System.out.println("Must be host to start the game");
+			}
+			else {
+				System.out.println("Could not start game\nError code from server: " + response);
+			}
+			inData.close();
+			dataSocket.close();
+			welcomeData.close();
+		}
+		catch (Exception e) {
+			System.out.println("Could not connect to server");
+			disconnectFromServer();
+			e.printStackTrace();
+		}
 	}
 
-    /** establish connection with server, join selected game */
-    public void joinGame() {
-        // TODO: 
-        //possibly unnecessary
-    }
+	private void waitForUpdate() throws Exception {
+		System.out.println("Awaiting broadcast...");
+		String fromServer = inFromServer.readUTF();
+		System.out.println("processing BROADCAST: " + fromServer);
+		processUpdate(fromServer);
+	}
+
+	private void processUpdate(String serverCommand) {
+		String firstLine;
+		StringTokenizer tokens = new StringTokenizer(serverCommand);
+
+		firstLine = tokens.nextToken();
+
+		if (firstLine.equals("start-game")) {
+			gui.swapPanel("game");
+		}
+	}
 
 	/****************************************************************
 	 * Send a request to the server to place a tile at 
@@ -323,7 +400,7 @@ public class ClientModel {
 			DataInputStream inData = new DataInputStream(new BufferedInputStream(dataSocket.getInputStream()));
 			try {
 				String file = inData.readUTF();
-				System.out.println("Closing server. Code: " + file);
+				System.out.println("Disconnect from server: " + file);
 				
 			}
 			catch (Exception e) {
@@ -341,7 +418,8 @@ public class ClientModel {
 			
 		}
  	}
-	public void quitGame() {
+	
+	 public void quitGame() {
 		disconnectFromServer();
 		System.exit(0);
 	}

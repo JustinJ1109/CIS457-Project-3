@@ -26,7 +26,7 @@ public class GUI {
 
         refreshButton,
         lobbyBackButton,
-        playButton;
+        lobbyPlayButton;
 
     /** JPanels */
     private JPanel
@@ -39,9 +39,7 @@ public class GUI {
     /** Text Fields (user input) */
     private JTextField
         userNameField,
-
-        serverHostIPField,
-        serverHostPortField;
+        serverHostIPField;
 
     private JComboBox 
         numPlayersBox,
@@ -65,8 +63,6 @@ public class GUI {
         lobbyPanel = new JPanel();
         gamePanel = new Surround4Panel();
 
-        //TODO: remove port from main page, dont need
-
     /** MENU LAYOUT */
         GroupLayout menuLayout = new GroupLayout(menuPanel);
         menuLayout.setAutoCreateGaps(true);
@@ -75,7 +71,6 @@ public class GUI {
 
         JLabel menuTitleLabel = new JLabel("Surround Game Online!");
         JLabel menuServerHostIPLabel = new JLabel("Server IP");
-        JLabel menuServerPortLabel = new JLabel("Server Port");
         JLabel menuUserNameLabel = new JLabel("Username");
 
         menuTitleLabel.setFont(new Font(menuTitleLabel.getFont().getName(), Font.PLAIN, 40));
@@ -87,11 +82,9 @@ public class GUI {
         // Text field
         userNameField = new JTextField();
         serverHostIPField = new JTextField();
-        serverHostPortField = new JTextField();
 
         userNameField.setColumns(22);
         serverHostIPField.setColumns(22);
-        serverHostPortField.setColumns(22);
 
         JPanel userNamePanel = new JPanel();
         userNamePanel.add(menuUserNameLabel);
@@ -101,17 +94,12 @@ public class GUI {
         serverConnectionIPPanel.add(menuServerHostIPLabel);
         serverConnectionIPPanel.add(serverHostIPField);
 
-        JPanel serverConnectionPortPanel = new JPanel();
-        serverConnectionPortPanel.add(menuServerPortLabel);
-        serverConnectionPortPanel.add(serverHostPortField);
-
         menuPanel.add(menuTitleLabel);
         menuPanel.add(menuHostGameButton);
         menuPanel.add(menuConnectGameButton);
         menuPanel.add(menuQuitButton);
         menuPanel.add(userNamePanel);
         menuPanel.add(serverConnectionIPPanel);
-        menuPanel.add(serverConnectionPortPanel);
 
         menuLayout.setHorizontalGroup(
             menuLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
@@ -122,7 +110,6 @@ public class GUI {
 
                 .addComponent(userNamePanel)
                 .addComponent(serverConnectionIPPanel)
-                .addComponent(serverConnectionPortPanel)
         );
         menuLayout.setVerticalGroup(
             menuLayout.createSequentialGroup()
@@ -134,7 +121,6 @@ public class GUI {
                 .addComponent(userNamePanel)
 
                 .addComponent(serverConnectionIPPanel)
-                .addComponent(serverConnectionPortPanel)
         );
 
     /** HOST LAYOUT */
@@ -254,7 +240,7 @@ public class GUI {
 
         // add text fields and start button
         refreshButton = new JButton("Refresh");
-        playButton = new JButton("Play");
+        lobbyPlayButton = new JButton("Play");
         lobbyBackButton = new JButton("Back");
 
         String[] colNames = {"User", "Player"};
@@ -269,7 +255,7 @@ public class GUI {
         // add fields and button to panel
         lobbyPanel.add(lobbyTitleLabel);
         lobbyPanel.add(refreshButton);
-        lobbyPanel.add(playButton);
+        lobbyPanel.add(lobbyPlayButton);
         lobbyPanel.add(lobbyBackButton);
         lobbyPanel.add(lobbyTable);
 
@@ -279,7 +265,7 @@ public class GUI {
                 .addComponent(refreshButton)
                 .addComponent(lobbyTablePane)
                 .addComponent(lobbyBackButton)
-                .addComponent(playButton)
+                .addComponent(lobbyPlayButton)
         );
         lobbyLayout.setVerticalGroup(
             lobbyLayout.createSequentialGroup()
@@ -287,7 +273,7 @@ public class GUI {
                 .addComponent(refreshButton)
                 .addComponent(lobbyTablePane)
                 .addComponent(lobbyBackButton)
-                .addComponent(playButton)
+                .addComponent(lobbyPlayButton)
         );
         
 
@@ -335,8 +321,8 @@ public class GUI {
         return refreshButton;
     }
 
-    public JButton getPlayButton() {
-        return playButton;
+    public JButton getLobbyPlayButton() {
+        return lobbyPlayButton;
     }
 
     public JButton getLobbyBackButton() {
@@ -349,10 +335,6 @@ public class GUI {
 
     public JTextField getServerHostIPField() {
         return serverHostIPField;
-    }
-
-    public JTextField getServerHostPortField() {
-        return serverHostPortField;
     }
 
     public JComboBox getNumPlayersBox() {
@@ -382,13 +364,17 @@ public class GUI {
 
     }
 
+    public void rmStartButtonFromNonHost() {
+        lobbyPanel.getLayout().removeLayoutComponent(lobbyPlayButton);
+    }
+
     /****************************************************************
      * Display new panel on screen when event is triggered
      * 
      * @param newPanel
      ***************************************************************/
     public void swapPanel(String newPanel) {
-        System.out.println("Swapping to " + newPanel);
+        // System.out.println("Swapping to " + newPanel);
         frame.getContentPane().removeAll();
 
         if (newPanel.equals("menu")) {

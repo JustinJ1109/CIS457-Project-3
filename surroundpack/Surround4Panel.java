@@ -26,7 +26,6 @@ public class Surround4Panel extends JPanel {
         
         listen = new ButtonListener();
 
-
         setLayout(new BorderLayout());
         panel1 = new JPanel();
         panel2 = new JPanel();
@@ -58,19 +57,14 @@ public class Surround4Panel extends JPanel {
         }
         
         startingPlayer = 0;
-        
-        
-
         createScores();
 
         game = new Surround4Game(boardSize,numPlayers,startingPlayer);
         createBoard();
 
-
         add(panel2, BorderLayout.NORTH);
         add(panel1, BorderLayout.CENTER);
         add(panel3, BorderLayout.SOUTH);
-
     }
 
     private class ButtonListener implements ActionListener {
@@ -194,18 +188,26 @@ public class Surround4Panel extends JPanel {
         }
     }
 
-
     private void createBoard() {
 
         board = new JButton[boardSize][boardSize];
         panel1.setLayout(new GridLayout(boardSize,boardSize));
 
-        for (int i = 0; i < boardSize; i++) // rows
+        for (int i = 0; i < boardSize; i++) {// rows
             for (int j = 0; j < boardSize; j++) {
                 board[i][j] = new JButton("");
                 board[i][j].addActionListener(listen);
                 panel1.add(board[i][j]);
             }
+        }
+    }
+
+    public void toggleButtonListeners() {
+        for (int i = 0; i < boardSize; i++) {
+            for (int j = 0; j < boardSize; j++) {
+
+            }
+        }
     }
 
     private void displayBoard() {
