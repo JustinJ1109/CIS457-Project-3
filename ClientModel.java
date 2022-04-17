@@ -146,12 +146,16 @@ public class ClientModel {
 				
 				// await for server response in subthread
 				// lets user still interact with GUI, doesn't freeze
-				new Thread(new Runnable() {
+				Thread responseListener = new Thread(new Runnable() {
 					@Override
 					public void run() {
 						try {
-							// while(!inGame && connectedToServer)
-							waitForUpdate();
+							if (!waitForGameStart()) {
+								gui.generateDialog("Error Starting Game", "Error");
+							}
+							else {
+								gui.swapPanel("game");
+							}
 						}
 						catch (Exception e) {
 							
@@ -160,8 +164,9 @@ public class ClientModel {
 
 						System.out.println("CLOSING SUBTHREAD");
 					}
-				}).start();
-							
+				});
+				responseListener.start();
+				
 			}
 			else if (response.equals("LOBBY_LIMIT_REACHED")) {
 				gui.generateDialog("Max players Exceeded", "Could not join");
@@ -189,7 +194,6 @@ public class ClientModel {
 		catch (Exception e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	/****************************************************************
@@ -227,8 +231,6 @@ public class ClientModel {
 				System.out.println("\t" + playerUserNames[i] + " " + playerNums[i]);
 			}
 
-
-
 			gui.updateLobbyTable(playerUserNames, playerNums);
 			
 			ois.close();
@@ -239,7 +241,6 @@ public class ClientModel {
 			System.err.println("Could not get player list");
 			e.printStackTrace();
 		}
-
 	}
 
 	/****************************************************************
@@ -385,6 +386,17 @@ public class ClientModel {
 			disconnectFromServer();
 			e.printStackTrace();
 		}
+	}
+
+	private boolean waitForGameStart() throws Exception {
+		String fromServer = inFromServer.readUTF();
+
+		StringTokenizer tokenizer = new StringTokenizer(fromServer);
+		if (tokenizer.nextToken().equals("start-game")) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/****************************************************************
