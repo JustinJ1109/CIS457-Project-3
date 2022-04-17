@@ -5,32 +5,52 @@ import java.sql.Date;
 import java.text.SimpleDateFormat;
 import java.util.StringTokenizer;
 import java.util.Vector;
+import java.util.concurrent.ThreadPoolExecutor.DiscardOldestPolicy;
 
 public class ServerHandler extends Thread {
 	
 	private Socket connectionSocket;
-	private SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
-
-
-	protected static Vector<PlayerInfo> currentPlayers = new Vector<PlayerInfo>();
+	protected static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
 	
+	// list of all players currently connected and in lobby/game
+	protected static Vector<PlayerInfo> currentPlayers = new Vector<PlayerInfo>(0);
+
+	// track current valid player id
+	protected static int playerIDGen;
+
+	// Thread-Specific
+	private int myPlayerID;
 	private int port;
 	private InetAddress clientAddress;
+	private String userName;
 
 	private DataOutputStream outToClient;
 	private DataInputStream inFromClient;
-
 	private DataOutputStream dataOutToClient;
-	
+
 	private boolean welcome;
 	private boolean running;
-	private boolean hosting;
 
-	// info receieved from host
-	private int maxPlayers;
+	private PlayerInfo p;
 
-	// info maintained in server
-	private int currentPlayer;	//  <------------------------------------------ potential error HERE
+	// this thread is the host
+	private boolean ishost;
+
+	// there is already a host
+	public static Boolean hosting;
+
+	// total number of players in lobby
+	protected static int maxPlayers;
+
+	// current player's turn
+	protected static int currentPlayer;
+
+	//TODO: if host leaves, make new player host
+	//TODO: disconnect player when at menu
+
+	// FIXME: playerID not unique, when player is hosting and another tries to join
+	// it deletes the host from list of players, adds the attempting player, but doesnt let
+	// player join, host cannot leave
 
 	/****************************************************************
 	 * Constructor, Initialize IO streams, set initial vars, 
@@ -47,6 +67,12 @@ public class ServerHandler extends Thread {
 		welcome = true;
 		running = true;
 		clientAddress = connectionSocket.getInetAddress();
+
+		// only initialze once, if not here, each new thread will reset this
+		if (hosting == null) {
+			hosting = false;
+		}
+		ishost = false;
 	}
 	
 	public void run() {
@@ -59,11 +85,12 @@ public class ServerHandler extends Thread {
 		            waitForRequest();
 		        }       
 		    }
-
 		} 
 		catch (Exception e) {
 			printDate();
-			System.out.println("User disconnected " + clientAddress.toString());
+			System.out.println("User lost connection " + clientAddress.toString());
+
+			removePlayer(p);
 		    // e.printStackTrace();
         }
 	}
@@ -84,15 +111,17 @@ public class ServerHandler extends Thread {
 		String hostName = tokenizer.nextToken();
 		int port = Integer.parseInt(tokenizer.nextToken());
 		String userName = tokenizer.nextToken();
+		this.userName = userName;
 
+		myPlayerID = playerIDGen;
+		playerIDGen++;
+		System.out.print("Assigning playerID " + myPlayerID);
+		p = new PlayerInfo(hostName, port, userName, myPlayerID);
 
-		PlayerInfo p = new PlayerInfo(hostName, port, userName);
-		addPlayer(p);
 		inFromClient = new DataInputStream(new BufferedInputStream(this.connectionSocket.getInputStream()));
 
 		printDate();
 		System.out.println("User " + hostName + ":" + port + " connected");
-		
 	}
 	
 	/****************************************************************
@@ -160,48 +189,103 @@ public class ServerHandler extends Thread {
 			}
 
 		}
-		else if (clientCommand.equals("host")) {
 
-			
+		else if (clientCommand.equals("host")) {
 			// do something with this
 			int boardSize, numPlayers;
-
 			dataSocket = new Socket(connectionSocket.getInetAddress(), port);
 			dataOutToClient = new DataOutputStream(dataSocket.getOutputStream());
 
 			try {
 				numPlayers = Integer.parseInt(tokens.nextToken());
 				boardSize = Integer.parseInt(tokens.nextToken());
+				maxPlayers = numPlayers;
 			}
 			catch (NumberFormatException e) {
 				System.out.println("\tUnable to convert numPlayers or boardSize to int");
 				return;
 			}
 
-			
-			dataOutToClient.writeUTF("SUCCESS");
-			
+			if (!hosting) {
+				ishost = true;
+				hosting = true;
+
+				p.setPlayerNumber(0);
+				addPlayer(p);
+				dataOutToClient.writeUTF("SUCCESS");
+
+			}
+			else {
+				dataOutToClient.writeUTF("ERROR_HOST_IN_SESSION");
+			}
+			dataOutToClient.close();
+			dataSocket.close();
+		}
+		
+		else if (clientCommand.equals("join")) {
+			dataSocket = new Socket(connectionSocket.getInetAddress(), port);
+			dataOutToClient = new DataOutputStream(dataSocket.getOutputStream());
+
+			boolean jump = false;
+			for (PlayerInfo pl: currentPlayers) {
+				if (pl.getUserName().equals(userName)) {
+					dataOutToClient.writeUTF("USERNAME_IN_USE");
+					jump = true;
+				}
+			}
+
+			if (!jump) {
+				if (currentPlayers.size() == 0) {
+					dataOutToClient.writeUTF("NO_HOST_AVAILABLE");
+				}
+				if (currentPlayers.size() < maxPlayers) {
+					p.setPlayerNumber(currentPlayers.size());
+					addPlayer(p);
+					dataOutToClient.writeUTF("SUCCESS");
+				}
+				else {
+					dataOutToClient.writeUTF("LOBBY_LIMIT_REACHED");
+				}
+			}
 
 			dataOutToClient.close();
 			dataSocket.close();
-
-
-		}
-
-		else if (clientCommand.equals("join")) {
-
 		}
 
 		// player left lobby
 		else if (clientCommand.equals("leave") || clientCommand.equals("end-host")) {
 			//remove player from list
-			if (clientCommand.equals("end-host")) {
+			if (clientCommand.equals("end-host") && ishost) {
 				hosting = false;
 			}
+
+			dataSocket = new Socket(connectionSocket.getInetAddress(), port);
+			dataOutToClient = new DataOutputStream(dataSocket.getOutputStream());
+
+			boolean rmSuccess = false;
+			System.out.println("looking for " + clientAddress.getHostAddress());
+
+			for (PlayerInfo p: currentPlayers) {
+				System.out.println("comparing to " + p.getIP());
+				if (p.getPlayerID() == myPlayerID) {
+					removePlayer(p);
+					rmSuccess = true;
+					break;
+				}
+			}
+
+			if (rmSuccess) {
+				dataOutToClient.writeUTF("SUCCESS");
+			}
+			else {
+				dataOutToClient.writeUTF("USER_NOT_FOUND");
+			}
+
+			dataOutToClient.close();
+			dataSocket.close();
 		}
 
 		else if (clientCommand.equals("start-game")) {
-			hosting = true;
 
 		}
 
@@ -222,7 +306,27 @@ public class ServerHandler extends Thread {
 			
 		}
 		else if (clientCommand.equals("disconnect")) {
+			dataSocket = new Socket(connectionSocket.getInetAddress(), port);
+			dataOutToClient = new DataOutputStream(dataSocket.getOutputStream());
 
+			dataOutToClient.writeUTF("SUCCESS");
+
+			for (PlayerInfo pl: currentPlayers) {
+				if (pl.getPlayerID() == myPlayerID) {
+					removePlayer(pl);
+					break;
+				}
+			}
+
+			dataOutToClient.close();
+			dataSocket.close();
+			inFromClient.close();
+			outToClient.close();
+			connectionSocket.close();
+			running = false;
+
+			printDate();
+			System.out.println("User disconnected " + clientAddress.getHostAddress());
 		}
 	}
 
@@ -234,6 +338,16 @@ public class ServerHandler extends Thread {
 	private void addPlayer(PlayerInfo newPlayer) {
 		synchronized (currentPlayers) {
 			currentPlayers.add(newPlayer);
+		}
+	}
+
+	private void removePlayer(PlayerInfo player) {
+		synchronized (currentPlayers) {
+			try {
+			currentPlayers.remove(player);
+			}
+			catch(Exception e) {
+			}
 		}
 	}
 
@@ -261,4 +375,5 @@ public class ServerHandler extends Thread {
 		Date date = new Date(System.currentTimeMillis());
 		System.out.print("[" + formatter.format(date) + "] ");
 	}
+
 }	

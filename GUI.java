@@ -18,11 +18,11 @@ public class GUI {
         menuConnectGameButton,
         menuQuitButton,
 
-        startButton,
+        hostStartButton,
         hostBackButton,
-        joinBackButton,
 
-        joinButton,
+        joinStartButton,
+        joinBackButton,
 
         refreshButton,
         lobbyBackButton,
@@ -64,6 +64,8 @@ public class GUI {
         hostPanel = new JPanel();
         lobbyPanel = new JPanel();
         gamePanel = new Surround4Panel();
+
+        //TODO: remove port from main page, dont need
 
     /** MENU LAYOUT */
         GroupLayout menuLayout = new GroupLayout(menuPanel);
@@ -161,7 +163,7 @@ public class GUI {
 
 
         // add text fields and start button
-        startButton = new JButton("Host");
+        hostStartButton = new JButton("Host");
         hostBackButton = new JButton("Back");
 
 
@@ -177,7 +179,7 @@ public class GUI {
 
         // add fields and button to panel
         hostPanel.add(hostTitleLabel);
-        hostPanel.add(startButton);
+        hostPanel.add(hostStartButton);
         hostPanel.add(hostBoardSizePanel);
         hostPanel.add(hostNumPlayersPanel);
 
@@ -187,7 +189,7 @@ public class GUI {
                 .addComponent(hostBoardSizePanel)
                 .addComponent(hostNumPlayersPanel)
                 .addComponent(hostBackButton)
-                .addComponent(startButton)
+                .addComponent(hostStartButton)
                 
         );
         hostLayout.setVerticalGroup(
@@ -196,7 +198,7 @@ public class GUI {
                 .addComponent(hostBoardSizePanel)
                 .addComponent(hostNumPlayersPanel)
                 .addComponent(hostBackButton)
-                .addComponent(startButton)
+                .addComponent(hostStartButton)
                 
         );
 
@@ -212,7 +214,7 @@ public class GUI {
         joinTitleLabel.setFont(new Font(joinTitleLabel.getFont().getName(), Font.PLAIN, 40));
 
         // add text fields and start button
-        joinButton = new JButton("Join Game");
+        joinStartButton = new JButton("Join Game");
         joinBackButton = new JButton("Back");
 
         JPanel joinInputPanels = new JPanel();
@@ -221,21 +223,21 @@ public class GUI {
         // add fields and button to panel
         joinPanel.add(joinTitleLabel);
         joinPanel.add(joinInputPanels);
-        joinPanel.add(joinButton);
+        joinPanel.add(joinStartButton);
 
         joinLayout.setHorizontalGroup(
             joinLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
                 .addComponent(joinTitleLabel)
                 .addComponent(joinInputPanels)
                 .addComponent(joinBackButton)
-                .addComponent(joinButton)
+                .addComponent(joinStartButton)
         );
         joinLayout.setVerticalGroup(
             joinLayout.createSequentialGroup()
                 .addComponent(joinTitleLabel)
                 .addComponent(joinInputPanels)
                 .addComponent(joinBackButton)
-                .addComponent(joinButton)
+                .addComponent(joinStartButton)
         );
 
     /** LOBBY LAYOUT */
@@ -290,10 +292,11 @@ public class GUI {
         
 
     /** INITIAL STATE SETUP DO NOT TOUCH */
-
         hostBackButton.addActionListener(e -> swapPanel("menu"));
         joinBackButton.addActionListener(e -> swapPanel("menu"));
-        lobbyBackButton.addActionListener(e -> swapPanel("menu"));
+        menuHostGameButton.addActionListener(e -> swapPanel("host"));
+        menuConnectGameButton.addActionListener(e -> swapPanel("join"));
+        // lobbyBackButton.addActionListener(e -> swapPanel("menu"));
 
         frame.pack();
         frame.setPreferredSize(SCREEN_SIZE);
@@ -308,12 +311,12 @@ public class GUI {
         frame.setVisible(true);
     }
 
-    public JButton getStartButton() {
-        return startButton;
+    public JButton getHostStartButton() {
+        return hostStartButton;
     }
 
-    public JButton getJoinButton() {
-        return joinButton;
+    public JButton getJoinStartButton() {
+        return joinStartButton;
     }
 
     public JButton getMenuQuitButton() {
@@ -334,6 +337,10 @@ public class GUI {
 
     public JButton getPlayButton() {
         return playButton;
+    }
+
+    public JButton getLobbyBackButton() {
+        return lobbyBackButton;
     }
 
     public JTextField getUserNameField() {

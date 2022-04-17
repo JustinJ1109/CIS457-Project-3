@@ -7,26 +7,24 @@ public class ClientModel {
 
 	private final int controlPort = 1370;
 
-	private int playerNumber;
-	private boolean connectedToServer;
 	private boolean isHosting;
+
+	private boolean connectedToServer;
 
 	private String serverHostIP, userName;
 	private int port;
 	private Socket ControlSocket;
 	private DataOutputStream toServer;
-	private ArrayList<List<Integer>> moves = new ArrayList<List<Integer>>();
 
 	private GUI gui;
 
 	public ClientModel(GUI gui) {
 		this.gui = gui;
-		gui.getStartButton().addActionListener(e -> hostGame());
+		gui.getHostStartButton().addActionListener(e -> hostGame());
+		gui.getLobbyBackButton().addActionListener(e -> leaveLobby());
         gui.getMenuQuitButton().addActionListener(e -> quitGame());
-        gui.getMenuHostGameButton().addActionListener(e -> connectToServer('h'));
-        gui.getMenuJoinGameButton().addActionListener(e -> connectToServer('c'));
 		gui.getRefreshButton().addActionListener(e -> updatePlayerList());
-
+		gui.getJoinStartButton().addActionListener(e -> joinLobby());
 		connectedToServer = false;
 	}
 
@@ -52,23 +50,21 @@ public class ClientModel {
 			System.out.println("Invalid username, cannot contain spaces and cannot be empty");		
 			return false;
 		}
-
-		
 		return true;
 	}
 
     /** establish connection with server */
-    public void connectToServer(char hc) {
+    private boolean connectToServer(char hc) {
 
 		if (!connectedToServer) {
 			if (!verifyConnectionInputs()) {
-				return;
+				return false;
 			}
 			port = controlPort;
 
 			// TODO: need error checking to make sure hostname and port are valid?
 			try {
-				System.out.println("Attemping to connect to host: " + serverHostIP + " at port " + controlPort);
+				System.out.println("Attemping to connect to server: " + serverHostIP + " at port " + controlPort);
 				ControlSocket = new Socket(serverHostIP, controlPort);
 				System.out.println("You are connected to " + serverHostIP);
 
@@ -77,20 +73,68 @@ public class ClientModel {
 				String dataToServer = serverHostIP + " " + port + " " + userName;
 
 				toServer.writeUTF(dataToServer) ;
-				System.out.println("Sent " + dataToServer + " to server");			
-				connectedToServer = true;
+				System.out.println("Sent " + dataToServer + " to server");
+				connectedToServer = true;			
 				
 			}
 			catch (Exception e) {
 				System.out.println("Unable to connect to host: " + serverHostIP + " on port " + controlPort);
 				e.printStackTrace();
+				return false;
+			}
+
+		}
+		gui.swapPanel(hc == 'h' ? "host" : "join");
+
+		return true;
+    }
+
+	public void joinLobby() {
+
+		try {
+			if (!connectToServer('c')) {
 				return;
 			}
+			String command = "join";
+			port += 2;
+
+			ServerSocket welcomeData = new ServerSocket(port);
+			String dataToServer = port + " " + command;
+
+			toServer.writeUTF(dataToServer);
+			System.out.println("Sending \'" + dataToServer + "\' to server");
+
+			Socket dataSocket = welcomeData.accept();
+			DataInputStream inData = new DataInputStream(new BufferedInputStream(dataSocket.getInputStream()));
+			String response = inData.readUTF();
+			boolean dc = false;
+
+			if (response.equals("SUCCESS")) {
+				gui.swapPanel("lobby");
+			}
+			else if (response.equals("LOBBY_LIMIT_REACHED")) {
+				System.out.println("Max players exceeded. Cannot join");
+			}
+			else if (response.equals("USERNAME_IN_USE")) {
+				System.out.println("Username in use. try another");
+				dc = true;
+			}
+			else if (response.equals("NO_HOST_AVAILABLE")) {
+				System.out.println("No one currently hosting");
+			}
+
+			inData.close();
+			dataSocket.close();
+			welcomeData.close();
+			if (dc) {
+				disconnectFromServer();
+			}
+		}
+		catch (Exception e) {
+			e.printStackTrace();
 		}
 
-		isHosting = hc == 'h' ? true : false;
-		gui.swapPanel(hc == 'h' ? "host" : "join");
-    }
+	}
 
 	// call server to get updated playerList
 	@SuppressWarnings("unchecked")
@@ -123,19 +167,29 @@ public class ClientModel {
 				System.out.println("\t" + playerUserNames[i] + " " + playerNums[i]);
 			}
 
+
+
 			gui.updateLobbyTable(playerUserNames, playerNums);
 			
-			
+			ois.close();
+			dataSocket.close();
+			welcomeData.close();
 		}
 		catch (Exception e) {
 			System.err.println("Could not get player list");
 			e.printStackTrace();
 		}
+
 	}
 
 	/** establish connection with server, tell it to make a new game, connect client to that game */
-    public void hostGame() {
+    private void hostGame() {
 		try {
+			if (!connectToServer('h')) {
+				return;
+			}
+			
+
 			String command = "host";
 			port += 2;
 			String boardSizeDims = gui.getBoardSizeBox().getSelectedItem().toString();
@@ -153,6 +207,7 @@ public class ClientModel {
 			DataInputStream inData = new DataInputStream(new BufferedInputStream(dataSocket.getInputStream()));
 			String response = inData.readUTF();
 			if (response.equals("SUCCESS")) {
+				isHosting = true;
 				gui.swapPanel("lobby");
 			}
 			else {
@@ -163,11 +218,54 @@ public class ClientModel {
 			welcomeData.close();
 		}
 		catch (Exception e) {
-			System.out.println("Could close streams");
+			System.out.println("Could not close streams");
 			e.printStackTrace();
 		}
 	}
 
+	private void leaveLobby() {
+		try {
+			String command;
+			if (isHosting) {
+				command = "end-host";
+			}
+			else {
+				command = "leave";
+			}
+			port += 2;
+			String boardSizeDims = gui.getBoardSizeBox().getSelectedItem().toString();
+			// convert 10x10 to for server side parsing
+			int boardSize = Integer.parseInt(boardSizeDims.substring(0, boardSizeDims.indexOf("x")));
+			String numPlayers = gui.getNumPlayersBox().getSelectedItem().toString();
+
+			ServerSocket welcomeData = new ServerSocket(port);
+			String dataToServer = port + " " + command + " " + numPlayers + " " + boardSize;
+
+			toServer.writeUTF(dataToServer);
+			System.out.println("Sending \'" + dataToServer + "\' to server");
+
+			Socket dataSocket = welcomeData.accept();
+			DataInputStream inData = new DataInputStream(new BufferedInputStream(dataSocket.getInputStream()));
+			String response = inData.readUTF();
+			if (response.equals("SUCCESS")) {
+				if (isHosting) {
+					isHosting = false;
+				}
+				disconnectFromServer();
+				gui.swapPanel("menu");
+			}
+			else {
+				System.out.println("Could not end host game\nError code from server: " + response);
+			}
+			inData.close();
+			dataSocket.close();
+			welcomeData.close();
+		}
+		catch (Exception e) {
+			System.out.println("Could not close streams");
+			e.printStackTrace();
+		}
+	}
 
 	public void play() {
 		gui.swapPanel("game");
@@ -215,11 +313,11 @@ public class ClientModel {
     /** close all IO streams and sockets, disconnect from server */
     public void disconnectFromServer() {
 		try {
-			String sentence = "close:";
+			String sentence = "disconnect";
 			port += 2; 
 			ServerSocket welcomeData = new ServerSocket(port);
 
-			toServer.writeUTF(port + " " + sentence + " " + serverHostIP);
+			toServer.writeUTF(port + " " + sentence);
 
 			Socket dataSocket = welcomeData.accept();
 			DataInputStream inData = new DataInputStream(new BufferedInputStream(dataSocket.getInputStream()));
@@ -232,6 +330,7 @@ public class ClientModel {
 				System.out.println("Could not close server");
 				e.printStackTrace();
 			}
+			connectedToServer = false;
 			inData.close();
 			toServer.close();
 			dataSocket.close();
@@ -239,11 +338,12 @@ public class ClientModel {
 			ControlSocket.close();
 		}
 		catch (Exception e) {
-			e.printStackTrace();
+			
 		}
  	}
 	public void quitGame() {
-		
+		disconnectFromServer();
+		System.exit(0);
 	}
 
     public void setUserName(String name) {
