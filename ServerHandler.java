@@ -355,6 +355,7 @@ public class ServerHandler extends Thread {
 			dataSocket.close();
 			
 		}
+		
 		else if (clientCommand.equals("disconnect")) {
 			dataSocket = new Socket(connectionSocket.getInetAddress(), port);
 			dataOutToClient = new DataOutputStream(dataSocket.getOutputStream());
@@ -379,6 +380,7 @@ public class ServerHandler extends Thread {
 			printDate();
 			System.out.print("\nUser disconnected " + userName + " " + clientAddress.getHostAddress());
 		}
+		
 		System.out.println("");
 
 	}

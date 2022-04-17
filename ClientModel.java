@@ -59,6 +59,7 @@ public class ClientModel {
 
         // Check that is IP format
         if (!serverHostIP.matches("(\\d{1,3}\\.){3}\\d{1,3}")) {
+			gui.generateDialog("Invalid IP", "Invalid IP");
             System.out.println("Invalid IP");
             return false;
         }
@@ -66,6 +67,7 @@ public class ClientModel {
 		// username cannot contain spaces or be empty
 		userName = gui.getUserNameField().getText();
 		if (userName.equals("") || userName.contains(" ")) {
+			gui.generateDialog("Invalid Username, try one without spaces", "Invalid Username");
 			System.out.println("Invalid username, cannot contain spaces and cannot be empty");		
 			return false;
 		}
@@ -78,7 +80,6 @@ public class ClientModel {
 	 * Open IO control sockets and send to server
 	 ***************************************************************/
     private boolean connectToServer(char hc) {
-
 		if (!connectedToServer) {
 			if (!verifyConnectionInputs()) {
 				return false;
@@ -102,6 +103,7 @@ public class ClientModel {
 				
 			}
 			catch (Exception e) {
+				gui.generateDialog("Could not connect to host", "Error Connecting");
 				System.out.println("Unable to connect to host: " + serverHostIP + " on port " + controlPort);
 				e.printStackTrace();
 				return false;
@@ -162,15 +164,18 @@ public class ClientModel {
 							
 			}
 			else if (response.equals("LOBBY_LIMIT_REACHED")) {
+				gui.generateDialog("Max players Exceeded", "Could not join");
 				System.out.println("Max players exceeded. Cannot join");
 			}
 			else if (response.equals("USERNAME_IN_USE")) {
+				gui.generateDialog("Username already in use", "Could not join");
 				System.out.println("Username in use. try another");
 				// disconnect user from server and let 
 				// them reconnect with diff uName
 				dc = true;
 			}
 			else if (response.equals("NO_HOST_AVAILABLE")) {
+				gui.generateDialog("No games to join", "Could not join");
 				System.out.println("No one currently hosting");
 			}
 
@@ -271,7 +276,11 @@ public class ClientModel {
 				isHosting = true;
 				gui.swapPanel("lobby");
 			}
+			else if (response.equals("ERROR_HOST_IN_SESSION")) {
+				gui.generateDialog("Someone is already hosting a game", "Could not host game");
+			}
 			else {
+				gui.generateDialog("Could not host game", "Could not host game");
 				System.out.println("Could not host game\nError code from server: " + response);
 			}
 			inData.close();
@@ -317,6 +326,7 @@ public class ClientModel {
 				gui.swapPanel("menu");
 			}
 			else {
+				gui.generateDialog("Could not host game", "Could not host game");
 				System.out.println("Could not end host game\nError code from server: " + response);
 			}
 			inData.close();
@@ -358,9 +368,11 @@ public class ClientModel {
 				// }
 			}
 			else if (response.equals("INVALID_HOST")) {
+				gui.generateDialog("Must be a host to start the game", "Could not start game");
 				System.out.println("Must be host to start the game");
 			}
 			else {
+				gui.generateDialog("Could not start game", response);
 				System.out.println("Could not start game\nError code from server: " + response);
 			}
 			inData.close();
@@ -369,6 +381,7 @@ public class ClientModel {
 		}
 		catch (Exception e) {
 			System.out.println("Could not connect to server");
+			gui.generateDialog("Could not connect to server", "Error connecting");
 			disconnectFromServer();
 			e.printStackTrace();
 		}

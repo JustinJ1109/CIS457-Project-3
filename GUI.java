@@ -366,6 +366,12 @@ public class GUI {
         return lobbyTable;
     }
 
+    public void generateDialog(String msg, String label) {
+        JOptionPane.showMessageDialog(frame, msg, label, JOptionPane.OK_OPTION);
+
+        
+    }
+
     /****************************************************************
      * Update the JTable with the input new data
      * 
