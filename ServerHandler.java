@@ -330,7 +330,7 @@ public class ServerHandler extends Thread {
 
 			// send message to all clients and tell player 0 goes first
 			if (isHost) {
-				dataOutToClient.writeUTF("SUCCESS");
+				dataOutToClient.writeUTF("SUCCESS ");
 				broadcast("start-game " + currentPlayer);
 			}
 			else {
@@ -388,6 +388,7 @@ public class ServerHandler extends Thread {
 		System.out.println("");
 
 	}
+
 
 	/****************************************************************
 	 * Add a player to the master list of currently connected players

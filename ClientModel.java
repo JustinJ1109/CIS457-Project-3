@@ -12,6 +12,7 @@
 import java.io.*; 
 import java.net.*;
 import java.util.*;
+import java.awt.event.*;
 
 /********************************************************************
  * Main Client class responsible for communicating with the server,
@@ -29,7 +30,7 @@ public class ClientModel {
 	protected static boolean inGame;
 	protected static boolean myTurn;
 	protected static int playerNumber;
-
+	protected static int currentPlayer;
 
 	private String serverHostIP, userName;
 	private Socket ControlSocket;
@@ -51,7 +52,14 @@ public class ClientModel {
 		gui.getLobbyBackButton().addActionListener(e -> leaveLobby());
         gui.getMenuQuitButton().addActionListener(e -> quitGame());
 		gui.getRefreshButton().addActionListener(e -> updatePlayerList());
-		gui.getLobbyPlayButton().addActionListener(e -> startGame());
+		
+		gui.getLobbyPlayButton().addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				startGame();
+				new Thread(() -> play()).start();
+			}
+		});		
 	}
 
     /****************************************************************
@@ -158,6 +166,7 @@ public class ClientModel {
 
 	/****************************************************************
 	 * Join lobby in session
+	 * set state to inGame once reaches
 	 * 
 	 * wait for server to broadcast start-game
 	 ***************************************************************/
@@ -189,8 +198,6 @@ public class ClientModel {
 				gui.getGamePanel().setBoardSize(Integer.parseInt(tokenizer.nextToken()));
 				playerNumber = Integer.parseInt(tokenizer.nextToken());
 				gui.getGamePanel().initBoard();
-
-				gui.rmStartButtonFromNonHost();
 				gui.swapPanel("lobby");
 				
 				// await for server response in subthread
@@ -293,7 +300,7 @@ public class ClientModel {
 	}
 
 	/****************************************************************
-	 * Tell server host started the game
+	 * Tell server host started the game for broadcast to all others
 	 * Set state to inGame
 	 * 
 	 * ONLY HOST CALLS THIS
@@ -315,7 +322,8 @@ public class ClientModel {
 			String response = inData.readUTF();
 			if (response.equals("SUCCESS")) {
 				inGame = true;
-				play();
+				
+				currentPlayer = Integer.parseInt(inFromServer.readUTF().split(" ")[1]);
 			}
 			else if (response.equals("INVALID_HOST")) {
 				gui.generateDialog("Must be a host to start the game", "Could not start game");
@@ -340,29 +348,53 @@ public class ClientModel {
 
 	private void play() {
 		System.out.println("Playing game");
-		
-		
 		gui.swapPanel("game");
 
 		// listen for updates
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
-				while (inGame) {
-					waitForUpdate();
-				}
+				System.out.println("Listening...");
+				waitForUpdate();
+				
 			}
-		});
+		}).start();
 
 		while (inGame) {
-			if (myTurn) {
-				// do move
-				// let JIcons iteractable
+			if (currentPlayer == playerNumber) {
+				myTurn = true;
+				System.out.println("My turn");
 
-				// send move data to server dataStream
+				//TODO:
+				// enable board button listeners
+
+				try {
+					String command = "place";
+					port += 2;
+					//TODO:
+					// get row/col from gui somehow
+					int row = 0, col = 0;
+
+					ServerSocket welcomeData = new ServerSocket(port);
+					String dataToServer = port + " " + command + " " + row + " " + col;
+
+					toServer.writeUTF(dataToServer);
+					System.out.println("Sending \'" + dataToServer + "\' to server");
+
+					Socket dataSocket = welcomeData.accept();
+					DataInputStream inData = new DataInputStream(new BufferedInputStream(dataSocket.getInputStream()));
+					String response = inData.readUTF();
+
+				}
+				catch (Exception e) {
+
+				}
+
 			}
 
 			myTurn = false;
+			//TODO: 
+			// disable board button listeners
 		}
 		
 	}
@@ -373,6 +405,7 @@ public class ClientModel {
 
 		StringTokenizer tokenizer = new StringTokenizer(fromServer);
 		if (tokenizer.nextToken().equals("start-game")) {
+			currentPlayer = Integer.parseInt(tokenizer.nextToken());
 			return true;
 		}
 
@@ -389,19 +422,21 @@ public class ClientModel {
 	 * 'playerNum win'
 	 ***************************************************************/
 	private void waitForUpdate() {
-		try {
-			System.out.println("Awaiting info from server");
-			String fromServer = inFromServer.readUTF();
-			StringTokenizer tokenizer = new StringTokenizer(fromServer);
+		while(inGame) {
+			try {
+				System.out.println("Awaiting info from server");
+				String fromServer = inFromServer.readUTF();
+				StringTokenizer tokenizer = new StringTokenizer(fromServer);
 
-			String command = tokenizer.nextToken();
+				String command = tokenizer.nextToken();
 
-			System.out.println("receieved " + command);
+				System.out.println("receieved " + command);
 
-			processUpdate(command);
-		}
-		catch (Exception e) {
+				processUpdate(command);
+			}
+			catch (Exception e) {
 
+			}
 		}
 
 	}
@@ -413,7 +448,9 @@ public class ClientModel {
 	 * @param serverCommand command and args received by server
 	 ***************************************************************/
 	private void processUpdate(String serverCommand) {
-		
+		//TODO: 
+		// receive data in format: 'playerNum row col nextPlayerNum'
+		// update gui accordinly and update current player turn to nextPlayerNum
 	}
 
 	/****************************************************************
