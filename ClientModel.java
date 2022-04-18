@@ -457,7 +457,7 @@ public class ClientModel {
 			return;
 		}
 		else {
-			playerThatWent = Integer.parseInt(tokens.nextToken());
+			playerThatWent = Integer.parseInt(firstTok);
 			row = Integer.parseInt(tokens.nextToken());
 			col = Integer.parseInt(tokens.nextToken());
 			currentPlayer = Integer.parseInt(tokens.nextToken());
@@ -471,7 +471,9 @@ public class ClientModel {
 		}
 		else {
 			// other turn was updated
-			gui.getGamePanel().setTile(row, col, playerThatWent);
+			JButton theirTile = gui.getGamePanel().setTile(row, col, playerThatWent);
+			theirTile.doClick();
+
 		}
 	}
 
@@ -652,11 +654,12 @@ public class ClientModel {
 
 					//TODO: set currentPlayer
 				}
-				else if (response.equals("INVALID_MOVE")) {
-					gui.generateDialog("Invalid Move", "Invalid Move");
-					System.out.println("Could not move at specified location");
-				}
-	
+				// else if (response.equals("INVALID_MOVE")) {
+				// 	gui.generateDialog("Invalid Move", "Invalid Move");
+				// 	System.out.println("Could not move at specified location");
+				// }
+				
+
 				inData.close();
 				dataSocket.close();
 				welcomeData.close();

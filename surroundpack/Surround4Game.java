@@ -26,6 +26,7 @@ public class Surround4Game {
         board = new Cell[boardSize][boardSize];
         this.player = startingPlayer;
         remainingPlayers = remainingPlayerNums;
+        numPlayers = remainingPlayers.length;
 
         // set all to in game
         playerStatus = new int[remainingPlayers.length];
@@ -91,12 +92,13 @@ public class Surround4Game {
      ****************************************************************
      * @return*/
     public int nextPlayer() {
-        do {
-            player = player + 1;
-            if (player == numPlayers)
-                player = 0;
-        } while (playerStatus[player] == -1);
-        return 0;
+        player = player + 1 >= numPlayers ? 0 : player + 1;
+        
+        
+        if (playerStatus[player] != 1) {
+            nextPlayer();
+        }
+        return player;
     }
 
     /******************************************************************

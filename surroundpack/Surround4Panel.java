@@ -156,8 +156,9 @@ public class Surround4Panel extends JPanel {
         return selectedTile;
     }
 
-    public void setTile(int row, int col, int player) {
+    public JButton setTile(int row, int col, int player) {
         board[row][col].setBackground(playerColors[player]);
+        return board[row][col];
         // board[row][col].setOwner(player);
     }
 
