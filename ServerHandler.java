@@ -110,9 +110,9 @@ public class ServerHandler extends Thread {
 		        }
 		        else {
 		            waitForRequest();
-		        }       
+		        }
 		    }
-		} 
+		}
 		catch (Exception e) {
 			printDate();
 			System.out.println("User lost connection " + clientAddress.toString());
@@ -125,7 +125,7 @@ public class ServerHandler extends Thread {
 
 			removePlayer(p);
 			System.out.println(" ");
-		    // e.printStackTrace();
+		    e.printStackTrace();
         }
 		finally {
 			handlers.removeElement(this);

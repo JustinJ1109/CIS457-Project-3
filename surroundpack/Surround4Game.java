@@ -187,27 +187,27 @@ public class Surround4Game {
             return false;
         } else {
             // if there is a friendly tile touching that hasn't been looked at, re-call method on that tile
-            if (board[row + 1][col].getPlayerNumber() == board[row][col].getPlayerNumber() &&
+            if (row + 1 < board.length && board[row + 1][col].getPlayerNumber() == board[row][col].getPlayerNumber() &&
                     !board[row + 1][col].isSeen()) {
 
                 if (!isSurrounded(row + 1, col))
                     return false;
             }
-            if (board[row - 1][col].getPlayerNumber() == board[row][col].getPlayerNumber() &&
+            if (row - 1 > 0 && board[row - 1][col].getPlayerNumber() == board[row][col].getPlayerNumber() &&
                     !board[row - 1][col].isSeen()) {
 
                 if (!isSurrounded(row - 1, col))
                     return false;
             }
 
-            if (board[row][col + 1].getPlayerNumber() == board[row][col].getPlayerNumber() &&
+            if (col + 1 < board[0].length && board[row][col + 1].getPlayerNumber() == board[row][col].getPlayerNumber() &&
                     !board[row][col + 1].isSeen()) {
 
                 if (!isSurrounded(row, col + 1))
                     return false;
             }
 
-            if (board[row][col - 1].getPlayerNumber() == board[row][col].getPlayerNumber() &&
+            if (col - 1 > 0 && board[row][col - 1].getPlayerNumber() == board[row][col].getPlayerNumber() &&
                     !board[row][col - 1].isSeen()) {
 
                 if (!isSurrounded(row, col - 1))
