@@ -12,6 +12,9 @@
 import java.io.*; 
 import java.net.*;
 import java.util.*;
+
+import javax.swing.JButton;
+import surroundpack.BoardPiece;
 import java.awt.event.*;
 
 /********************************************************************
@@ -31,12 +34,16 @@ public class ClientModel {
 	protected static boolean myTurn;
 	protected static int playerNumber;
 	protected static int currentPlayer;
+	protected static int[] selectedCoords = {-1, -1};
+	protected static boolean selectedTile;
 
 	private String serverHostIP, userName;
 	private Socket ControlSocket;
 
 	private DataOutputStream toServer;
 	private DataInputStream inFromServer;
+
+	private ButtonListener boardListener;
 
 	private GUI gui;
 
@@ -47,6 +54,7 @@ public class ClientModel {
 	 ***************************************************************/
 	public ClientModel(GUI gui) {
 		this.gui = gui;
+		boardListener = new ButtonListener();
 		gui.getHostStartButton().addActionListener(e -> hostGame());
 		gui.getJoinStartButton().addActionListener(e -> joinLobby());
 		gui.getLobbyBackButton().addActionListener(e -> leaveLobby());
@@ -57,7 +65,8 @@ public class ClientModel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				startGame();
-				new Thread(() -> play()).start();
+				if (isHosting)
+					new Thread(() -> play()).start();
 			}
 		});		
 	}
@@ -322,8 +331,8 @@ public class ClientModel {
 			String response = inData.readUTF();
 			if (response.equals("SUCCESS")) {
 				inGame = true;
-				
-				currentPlayer = Integer.parseInt(inFromServer.readUTF().split(" ")[1]);
+				inFromServer.readUTF(); // eat broadcast
+				//TODO: set currentPlayer
 			}
 			else if (response.equals("INVALID_HOST")) {
 				gui.generateDialog("Must be a host to start the game", "Could not start game");
@@ -345,75 +354,49 @@ public class ClientModel {
 		}
 	}
 
-
-	private void play() {
-		System.out.println("Playing game");
-		gui.swapPanel("game");
-
-		// listen for updates
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				System.out.println("Listening...");
-				waitForUpdate();
-				
-			}
-		}).start();
-
-		while (inGame) {
-			if (currentPlayer == playerNumber) {
-				myTurn = true;
-				System.out.println("My turn");
-
-				//TODO:
-				// enable board button listeners
-
-				try {
-					String command = "place";
-					port += 2;
-					//TODO:
-					// get row/col from gui somehow
-					int row = 0, col = 0;
-
-					ServerSocket welcomeData = new ServerSocket(port);
-					String dataToServer = port + " " + command + " " + row + " " + col;
-
-					toServer.writeUTF(dataToServer);
-					System.out.println("Sending \'" + dataToServer + "\' to server");
-
-					Socket dataSocket = welcomeData.accept();
-					DataInputStream inData = new DataInputStream(new BufferedInputStream(dataSocket.getInputStream()));
-					String response = inData.readUTF();
-
-				}
-				catch (Exception e) {
-
-				}
-
-			}
-
-			myTurn = false;
-			//TODO: 
-			// disable board button listeners
-		}
-		
-	}
-
-
+	/****************************************************************
+	 * Non-hosts sit here until host clicks start game
+	 * 
+	 * ONLY NON-HOST CALLS THIS
+	 * 
+	 * @return true when client receives message from server
+	 * saying that game has started
+	 * @throws Exception
+	 ***************************************************************/
 	private boolean waitForGameStart() throws Exception {
 		String fromServer = inFromServer.readUTF();
 
 		StringTokenizer tokenizer = new StringTokenizer(fromServer);
 		if (tokenizer.nextToken().equals("start-game")) {
-			currentPlayer = Integer.parseInt(tokenizer.nextToken());
+			//TODO: setCurrentPlayer
 			return true;
 		}
-
 		return false;
 	}
 
+	/****************************************************************	 
+	 * Once host starts game, all clients are send here
+	 * 
+	 * Dispatches a thread to listen to server for game state updates
+	 * as well as tell server updates
+	 * 
+	 * GOTO waitForUpdate()
+	 ***************************************************************/
+	private void play() {
+		gui.swapPanel("game");
+
+		// listen for updates from server
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				waitForUpdate();
+				
+			}
+		}).start();
+	}
+
 	/****************************************************************
-	 * Wait for server message
+	 * Wait for server message and then send to processUpdate()
 	 * 
 	 * @throws Exception input stream was closed abruptly
 	 * 
@@ -424,33 +407,72 @@ public class ClientModel {
 	private void waitForUpdate() {
 		while(inGame) {
 			try {
-				System.out.println("Awaiting info from server");
+				// System.out.println("Awaiting info from server");
 				String fromServer = inFromServer.readUTF();
-				StringTokenizer tokenizer = new StringTokenizer(fromServer);
 
-				String command = tokenizer.nextToken();
+				System.out.println("receieved " + fromServer);
 
-				System.out.println("receieved " + command);
-
-				processUpdate(command);
+				processUpdate(fromServer);
 			}
 			catch (Exception e) {
-
+				// e.printStackTrace();
 			}
 		}
-
 	}
 
 	/****************************************************************
 	 * Process the update received from the server. 
-	 * 	valid codes expected include:
 	 * 
 	 * @param serverCommand command and args received by server
 	 ***************************************************************/
 	private void processUpdate(String serverCommand) {
 		//TODO: 
 		// receive data in format: 'playerNum row col nextPlayerNum'
-		// update gui accordinly and update current player turn to nextPlayerNum
+								// 'winner winningPlayerNum'
+								// 'start firstPlayerNum'
+								
+								// 'reset game'
+		// update gui accordinly and update current player turn to nextPlayerNum		
+
+		int row, col, playerThatWent;
+		StringTokenizer tokens = new StringTokenizer(serverCommand);
+		String firstTok = tokens.nextToken();
+		if (firstTok.equals("reset")) {
+			// do reset game code here
+			return;
+		}
+		else if (firstTok.equals("start")) {
+			currentPlayer = Integer.parseInt(tokens.nextToken());
+			if (currentPlayer == playerNumber) {
+				System.out.println("My turn");
+				// my turn, allow modifying
+				setBoardClickable(true);
+				myTurn = true;
+			}
+			return;
+		}
+		else if (firstTok.equals("winner")) {
+			int winner = Integer.parseInt(tokens.nextToken());
+			gui.generateDialog("Player " + winner + " won!", "Game Over");
+			return;
+		}
+		else {
+			playerThatWent = Integer.parseInt(tokens.nextToken());
+			row = Integer.parseInt(tokens.nextToken());
+			col = Integer.parseInt(tokens.nextToken());
+			currentPlayer = Integer.parseInt(tokens.nextToken());
+		}
+
+		if (currentPlayer == playerNumber) {
+			System.out.println("My turn");
+			// my turn, allow modifying
+			setBoardClickable(true);
+			myTurn = true;
+		}
+		else {
+			// other turn was updated
+			gui.getGamePanel().setTile(row, col, playerThatWent);
+		}
 	}
 
 	/****************************************************************
@@ -589,6 +611,81 @@ public class ClientModel {
 			return false;
 		}
 		return true;
+	}
+
+	/****************************************************************
+	 * Listen for game board button presses
+	 * 
+	 * On press, get the coordinates of the button
+	 * set tile as pressed
+	 * 
+	 * end turn, disable button actions
+	 ***************************************************************/
+	private class ButtonListener implements ActionListener {
+		@Override
+        public void actionPerformed(ActionEvent e) {
+			System.out.println("Clicked");
+			BoardPiece clicked = (BoardPiece) e.getSource();
+			selectedCoords[0] = clicked.getYVal();
+			selectedCoords[1] = clicked.getXVal();
+
+			// tell server where you went
+			try {
+				String command = "set-tile";
+				port += 2;
+	
+				ServerSocket welcomeData = new ServerSocket(port);
+				String dataToServer = port + " " + command + " " + selectedCoords[0] + " " + selectedCoords[1];
+	
+				toServer.writeUTF(dataToServer);
+				System.out.println("Sending \'" + dataToServer + "\' to server");
+	
+				Socket dataSocket = welcomeData.accept();
+				DataInputStream inData = new DataInputStream(new BufferedInputStream(dataSocket.getInputStream()));
+				String response = inData.readUTF();
+				if (response.equals("SUCCESS")) {
+					inGame = true;
+					gui.getGamePanel().setTile(selectedCoords[0], selectedCoords[1], playerNumber);
+					selectedTile = true;
+
+					setBoardClickable(false);
+
+					//TODO: set currentPlayer
+				}
+				else if (response.equals("INVALID_MOVE")) {
+					gui.generateDialog("Invalid Move", "Invalid Move");
+					System.out.println("Could not move at specified location");
+				}
+	
+				inData.close();
+				dataSocket.close();
+				welcomeData.close();
+			}
+			catch (Exception er) {
+				gui.generateDialog("Something went wrong", "idk");
+			}
+
+		}
+	}
+
+	/****************************************************************
+	 * Add/Remove button listners from board
+	 * 
+	 * @param yes true if adding listeners, false if removing
+	 ***************************************************************/
+	private void setBoardClickable(boolean yes) {
+
+		for (int i = 0; i < gui.getGamePanel().getBoard().length; i++) {
+			for (int j = 0; j < gui.getGamePanel().getBoard().length; j++) {
+				JButton button = gui.getGamePanel().getBoard()[i][j];
+				if (yes) {
+					button.addActionListener(boardListener);
+				}
+				else {
+					button.removeActionListener(button.getActionListeners()[0]);
+				}
+			}
+		}
 	}
 
 	public static void main(String[] args) {

@@ -18,6 +18,8 @@ import java.util.Enumeration;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
+import surroundpack.Surround4Game;
+
 /********************************************************************
  * Dispatched class to handle each client's communication with the
  * server. receives requests from clients and broadcasts to clients
@@ -36,6 +38,7 @@ public class ServerHandler extends Thread {
 	protected static int playerIDGen;
 
 	protected static int boardSize;
+	protected static int numPlayers;
 
 	// Thread-Specific
 	private int myPlayerID;
@@ -63,6 +66,9 @@ public class ServerHandler extends Thread {
 
 	// current player's turn
 	protected static int currentPlayer;
+	
+
+	protected static Surround4Game gameInstance;
 
 	//TODO: if host leaves, make new player host
 	//TODO: disconnect player when at menu
@@ -118,7 +124,8 @@ public class ServerHandler extends Thread {
 			}
 
 			removePlayer(p);
-		    // e.printStackTrace();
+			System.out.println(" ");
+		    e.printStackTrace();
         }
 		finally {
 			handlers.removeElement(this);
@@ -202,7 +209,7 @@ public class ServerHandler extends Thread {
 			port = Integer.parseInt(firstLine);
 		}
 		catch (Exception e) {
-			System.out.println("\nERROR Could not parse " + port + " as int");
+			System.out.println("\nERROR Could not parse \'" + port + "\' as int");
 			return;
 		}
 
@@ -229,7 +236,6 @@ public class ServerHandler extends Thread {
 
 		else if (clientCommand.equals("host")) {
 			// do something with this
-			int boardSize, numPlayers;
 			dataSocket = new Socket(connectionSocket.getInetAddress(), port);
 			dataOutToClient = new DataOutputStream(dataSocket.getOutputStream());
 
@@ -330,8 +336,15 @@ public class ServerHandler extends Thread {
 
 			// send message to all clients and tell player 0 goes first
 			if (isHost) {
-				dataOutToClient.writeUTF("SUCCESS ");
-				broadcast("start-game " + currentPlayer);
+				int[] rmnPlayers = new int[maxPlayers];
+				for (int i = 0; i < currentPlayers.size(); i++) {
+					rmnPlayers[i] = currentPlayers.get(i).getPlayerNumber();
+				}
+				// create board on server side
+				gameInstance = new Surround4Game(boardSize, currentPlayer, rmnPlayers);
+				dataOutToClient.writeUTF("SUCCESS");
+				broadcast("start-game");
+				broadcast("start 0");
 			}
 			else {
 				dataOutToClient.writeUTF("INVALID_HOST");
@@ -357,7 +370,6 @@ public class ServerHandler extends Thread {
 
 			ois.close();
 			dataSocket.close();
-			
 		}
 		
 		else if (clientCommand.equals("disconnect")) {
@@ -385,6 +397,43 @@ public class ServerHandler extends Thread {
 			System.out.print("\nUser disconnected " + userName + " " + clientAddress.getHostAddress());
 		}
 		
+		else if (clientCommand.equals("set-tile")) {
+
+			dataSocket = new Socket(connectionSocket.getInetAddress(), port);
+			dataOutToClient= new DataOutputStream(dataSocket.getOutputStream());
+
+			// 'set-tile x y'
+			int row = Integer.parseInt(tokens.nextToken());
+			int col = Integer.parseInt(tokens.nextToken());
+
+			if (gameInstance.select(row, col)) {
+				dataOutToClient.writeUTF("SUCCESS");
+
+				int winner = gameInstance.getWinner();
+				if (winner > -1) {
+					// winner
+					broadcast("winner " + winner);
+				}
+				else if (winner == -1) {
+					// no winner
+					broadcast(currentPlayer + " " + row + " " + col + " " + gameInstance.nextPlayer());
+				}
+				else {
+					// tie
+				}
+				// add to internal board tracker
+
+				
+			}
+			else {
+				dataOutToClient.writeUTF("INVALID_MOVE");
+			}
+
+			dataOutToClient.close();
+			dataSocket.close();
+		}
+
+
 		System.out.println("");
 
 	}

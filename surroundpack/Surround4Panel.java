@@ -12,32 +12,31 @@
 
 package surroundpack;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicBorders;
 
 /********************************************************************
  * Game GUI Panel
  *******************************************************************/
 public class Surround4Panel extends JPanel {
 
-    private JButton[][] board;
+    private BoardPiece[][] board;
 
     private JPanel panel1, panel2, panel3;
     private int 
         boardSize, numPlayers, startingPlayer, 
         lastRow, lastCol;
 
-    private ButtonListener listen;
     private Surround4Game game;
 
     private JLabel[] scoreLabels;
     private static int[] scores;
 
+    private boolean selectedTile;
+
     private Color[] playerColors = {Color.RED, Color.BLUE, Color.YELLOW, Color.GREEN, Color.ORANGE};
 
     public void initBoard() {
-        listen = new ButtonListener();
 
         setLayout(new BorderLayout());
         panel1 = new JPanel();
@@ -55,147 +54,56 @@ public class Surround4Panel extends JPanel {
         add(panel3, BorderLayout.SOUTH);
     }
 
-    private class ButtonListener implements ActionListener {
-        public void actionPerformed(ActionEvent e) {
+    // private class ButtonListener implements ActionListener {
+    //     public void actionPerformed(ActionEvent e) {
 
-            //////////////////////////////////////
-            // NEW GAME CODE
-            // if (false) {
-            //     game.reset();
-            //     panel1.removeAll();
-            //     panel2.removeAll();
-            //     panel3.removeAll();
+    //         BoardPiece clicked = (BoardPiece) e.getSource();
+    //         lastRow = clicked.getY();
+    //         lastCol = clicked.getX();
+    //         selectedTile = true;
 
-            //     String strBdSize = JOptionPane.showInputDialog(null,
-            //             "Enter in the size of the board: ");
-            //     try {
-            //         boardSize = Integer.parseInt(strBdSize);
-            //         if (boardSize <= 3 || boardSize >= 20) {
-            //             //Jumps to catch statement
-            //             throw new NumberFormatException();
-            //         }
-            //     } catch (NumberFormatException f) {
-            //         JOptionPane.showMessageDialog(null,
-            //                 "Invalid input. Using board of size 10.");
-            //         boardSize = 10;
-            //     }
+    //         displayBoard();
 
-            //     String strNumPlayers = JOptionPane.showInputDialog(null,
-            //             "Enter the number of players: ");
-            //     try {
-            //         numPlayers = Integer.parseInt(strNumPlayers);
-            //         if (numPlayers < 2 || numPlayers > 99) {
-            //             //Jumps to catch statement
-            //             throw new NumberFormatException();
-            //         }
-            //     } catch (NumberFormatException f) {
-            //         JOptionPane.showMessageDialog(null,
-            //                 "Invalid input. Using 2 players.");
-            //         numPlayers = 2;
-            //     }
-
-            //     String strStartingPlayer = JOptionPane.showInputDialog(null,
-            //             "Who starts first?");
-            //     try {
-            //         startingPlayer = Integer.parseInt(strStartingPlayer);
-            //         if (startingPlayer < 0 || startingPlayer > numPlayers - 1) {
-            //             //Jumps to catch statement
-            //             throw new NumberFormatException();
-            //         }
-            //     } catch (NumberFormatException f) {
-            //         JOptionPane.showMessageDialog(null,
-            //                 "Invalid input. Starting with Player 0.");
-            //         startingPlayer = 0;
-            //     }
-            //     createScores();
-
-            //     game = new Surround4Game(boardSize,numPlayers,startingPlayer);
-            //     createBoard();
-            //     add(panel2, BorderLayout.NORTH);
-            //     add(panel1, BorderLayout.CENTER);
-            //     add(panel3, BorderLayout.SOUTH);
-            //     panel1.revalidate();
-            //     panel2.revalidate();
-            //     panel3.revalidate();
-            //     panel1.repaint();
-            //     panel2.repaint();
-            //     panel3.repaint();
-
-            // }
-            /// END NEW GAME CODE
-
-            // if(e.getSource() == undoButton) {
-            //     if(undoStatus) {
-            //         game.undo(lastRow, lastCol);
-            //         game.previousPlayer();
-            //         board[lastRow][lastCol].setBackground(null);
-            //         undoStatus = false;
-            //     }
-            //     else {
-            //         JOptionPane.showMessageDialog(null, "Unable to undo.");
-            //     }
-            // }
-
-            for (int row = 0; row < board.length; row++) {
-                for (int col = 0; col < board[0].length; col++) {
-                    if (board[row][col] == e.getSource()) {
-
-                        if (game.select(row, col)) {
-                            lastRow = row;
-                            lastCol = col;
-
-                            game.nextPlayer();
-                        }
-
-                        else {
-                            JOptionPane.showMessageDialog(null,
-                                    "Not a valid square! Pick again.");
-                        }
-                    }
-                }
-            }
-
-            displayBoard();
-
-            int winner = game.getWinner();
-            if(winner == -2)
-                JOptionPane.showMessageDialog(null,"Draw Game!");
-            else if (winner != -1) {
-                JOptionPane.showMessageDialog(null,
-                        "Player " + winner + " Wins!");
-                scores[winner] += 1;
-                displayScores();
-                game = new Surround4Game(boardSize, numPlayers, startingPlayer);
-                for (int row = 0; row < boardSize; row++) {
-                    for (int col = 0; col < boardSize; col++) {
-                        board[row][col].setBackground(null);
-                    }
-                }
-                displayBoard();
-            }
-        }
-    }
+    //         int winner = game.getWinner();
+    //         if(winner == -2)
+    //             JOptionPane.showMessageDialog(null,"Draw Game!");
+    //         else if (winner != -1) {
+    //             JOptionPane.showMessageDialog(null,
+    //                     "Player " + winner + " Wins!");
+    //             scores[winner] += 1;
+    //             displayScores();
+    //             game = new Surround4Game(boardSize, numPlayers, startingPlayer);
+    //             for (int row = 0; row < boardSize; row++) {
+    //                 for (int col = 0; col < boardSize; col++) {
+    //                     board[row][col].setBackground(null);
+    //                 }
+    //             }
+    //             displayBoard();
+    //         }
+    //     }
+    // }
 
     private void createBoard() {
 
-        board = new JButton[boardSize][boardSize];
+        board = new BoardPiece[boardSize][boardSize];
         panel1.setLayout(new GridLayout(boardSize,boardSize));
 
         for (int i = 0; i < boardSize; i++) {// rows
             for (int j = 0; j < boardSize; j++) {
-                board[i][j] = new JButton("");
-                board[i][j].addActionListener(listen);
+                board[i][j] = new BoardPiece();
+                board[i][j].setYVal(i);
+                board[i][j].setXVal(j);
                 panel1.add(board[i][j]);
             }
         }
     }
 
-    public void toggleButtonListeners() {
-        for (int i = 0; i < boardSize; i++) {
-            for (int j = 0; j < boardSize; j++) {
+    public BoardPiece[][] getBoard() {
+        return board;
+    }
 
-            }
-        }
+    public int[] getLastCoords() {
+        return new int[]{lastRow, lastCol};
     }
 
     private void displayBoard() {
@@ -206,7 +114,7 @@ public class Surround4Panel extends JPanel {
                 Cell c = game.getCell(row, col);
 
                 if (c != null) {
-                    board[row][col].setText("" + c.getPlayerNumber());
+                    board[row][col].setBackground(playerColors[c.getPlayerNumber()]);
                 }
             }
         }
@@ -242,5 +150,18 @@ public class Surround4Panel extends JPanel {
 
     public void setPlayers(int players) {
         numPlayers = players;
+    }
+
+    public boolean getSelectedTile() {
+        return selectedTile;
+    }
+
+    public void setTile(int row, int col, int player) {
+        board[row][col].setBackground(playerColors[player]);
+        // board[row][col].setOwner(player);
+    }
+
+    public void setHasSelectedTile(boolean val) {
+        selectedTile = val;
     }
 }
