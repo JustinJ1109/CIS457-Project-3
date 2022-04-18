@@ -35,6 +35,8 @@ public class ServerHandler extends Thread {
 	// track current valid player id
 	protected static int playerIDGen;
 
+	protected static int boardSize;
+
 	// Thread-Specific
 	private int myPlayerID;
 	private int port;
@@ -234,7 +236,9 @@ public class ServerHandler extends Thread {
 			try {
 				numPlayers = Integer.parseInt(tokens.nextToken());
 				boardSize = Integer.parseInt(tokens.nextToken());
+				
 				maxPlayers = numPlayers;
+				ServerHandler.boardSize = boardSize;
 			}
 			catch (NumberFormatException e) {
 				System.out.println("\n\tUnable to convert numPlayers or boardSize to int");
@@ -247,7 +251,7 @@ public class ServerHandler extends Thread {
 
 				p.setPlayerNumber(0);
 				addPlayer(p);
-				dataOutToClient.writeUTF("SUCCESS");
+				dataOutToClient.writeUTF("SUCCESS " + p.getPlayerNumber());
 
 			}
 			else {
@@ -276,7 +280,7 @@ public class ServerHandler extends Thread {
 				if (currentPlayers.size() < maxPlayers) {
 					p.setPlayerNumber(currentPlayers.size());
 					addPlayer(p);
-					dataOutToClient.writeUTF("SUCCESS");
+					dataOutToClient.writeUTF("SUCCESS " + maxPlayers + " "  + boardSize + " " + p.getPlayerNumber());
 				}
 				else {
 					dataOutToClient.writeUTF("LOBBY_LIMIT_REACHED");
@@ -320,7 +324,7 @@ public class ServerHandler extends Thread {
 
 		// Client host starts game
 		// broadcast to all clients to go to game panel and deliver first player
-		else if (clientCommand.equals("play")) {
+		else if (clientCommand.equals("start-game")) {
 			dataSocket = new Socket(connectionSocket.getInetAddress(), port);
 			dataOutToClient = new DataOutputStream(dataSocket.getOutputStream());
 
@@ -412,7 +416,7 @@ public class ServerHandler extends Thread {
 
 			while (e.hasMoreElements()) {
 				ServerHandler sh = (ServerHandler) e.nextElement();
-
+				
 				try {
 					sh.outToClient.flush();
 					sh.outToClient.writeUTF(message);

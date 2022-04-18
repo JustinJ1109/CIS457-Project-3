@@ -45,8 +45,9 @@ public class GUI {
         menuPanel,
         joinPanel,
         hostPanel,
-        lobbyPanel,
-        gamePanel;
+        lobbyPanel;
+
+    private Surround4Panel gamePanel;
 
     /** Text Fields (user input) */
     private JTextField
@@ -370,6 +371,10 @@ public class GUI {
         JOptionPane.showMessageDialog(frame, msg, label, JOptionPane.OK_OPTION);
 
         
+    }
+
+    public Surround4Panel getGamePanel() {
+        return gamePanel;
     }
 
     /****************************************************************

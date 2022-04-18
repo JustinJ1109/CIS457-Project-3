@@ -22,9 +22,14 @@ public class ClientModel {
 	private final int controlPort = 1370;
 	private int port;
 
+
 	private boolean isHosting;
 	private boolean connectedToServer;
-	private boolean inGame;
+
+	protected static boolean inGame;
+	protected static boolean myTurn;
+	protected static int playerNumber;
+
 
 	private String serverHostIP, userName;
 	private Socket ControlSocket;
@@ -46,32 +51,7 @@ public class ClientModel {
 		gui.getLobbyBackButton().addActionListener(e -> leaveLobby());
         gui.getMenuQuitButton().addActionListener(e -> quitGame());
 		gui.getRefreshButton().addActionListener(e -> updatePlayerList());
-		gui.getLobbyPlayButton().addActionListener(e -> play());
-	}
-
-	/****************************************************************
-	 * Check that IP and username is valid before allowing
-	 * 
-	 * @return true if valid, false otherwise
-	 ***************************************************************/
-	private boolean verifyConnectionInputs() {
-		serverHostIP = gui.getServerHostIPField().getText();
-
-        // Check that is IP format
-        if (!serverHostIP.matches("(\\d{1,3}\\.){3}\\d{1,3}")) {
-			gui.generateDialog("Invalid IP", "Invalid IP");
-            System.out.println("Invalid IP");
-            return false;
-        }
-
-		// username cannot contain spaces or be empty
-		userName = gui.getUserNameField().getText();
-		if (userName.equals("") || userName.contains(" ")) {
-			gui.generateDialog("Invalid Username, try one without spaces", "Invalid Username");
-			System.out.println("Invalid username, cannot contain spaces and cannot be empty");		
-			return false;
-		}
-		return true;
+		gui.getLobbyPlayButton().addActionListener(e -> startGame());
 	}
 
     /****************************************************************
@@ -115,6 +95,67 @@ public class ClientModel {
 		return true;
     }
 
+		/****************************************************************
+	 * Request server to host a new game. 
+	 * 
+	 * If there is already a host,
+	 * will be be denied. Else it will establish a newly hosted game
+	 * with server
+	 * 
+	 ****************************************************************/
+    private void hostGame() {
+		try {
+			if (!connectToServer('h')) {
+				return;
+			}
+
+			String command = "host";
+			port += 2;
+			String boardSizeDims = gui.getBoardSizeBox().getSelectedItem().toString();
+			// convert 10x10 to for server side parsing
+			int boardSize = Integer.parseInt(boardSizeDims.substring(0, boardSizeDims.indexOf("x")));
+			int numPlayers = Integer.parseInt(gui.getNumPlayersBox().getSelectedItem().toString());
+
+			ServerSocket welcomeData = new ServerSocket(port);
+			String dataToServer = port + " " + command + " " + numPlayers + " " + boardSize;
+
+			toServer.writeUTF(dataToServer);
+			System.out.println("Sending \'" + dataToServer + "\' to server");
+
+			Socket dataSocket = welcomeData.accept();
+			DataInputStream inData = new DataInputStream(new BufferedInputStream(dataSocket.getInputStream()));
+			String response = inData.readUTF();
+
+			StringTokenizer tokenizer = new StringTokenizer(response);
+			String resCode = tokenizer.nextToken();
+			if (resCode.equals("SUCCESS")) {
+				isHosting = true;
+
+				playerNumber = Integer.parseInt(tokenizer.nextToken());
+				gui.getGamePanel().setBoardSize(boardSize);
+				gui.getGamePanel().setPlayers(numPlayers);
+				gui.getGamePanel().initBoard();
+
+				gui.swapPanel("lobby");
+			}
+			else if (response.equals("ERROR_HOST_IN_SESSION")) {
+				gui.generateDialog("Someone is already hosting a game", "Could not host game");
+			}
+			else {
+				gui.generateDialog("Could not host game", "Could not host game");
+				System.out.println("Could not host game\nError code from server: " + response);
+			}
+			inData.close();
+			dataSocket.close();
+			welcomeData.close();
+		}
+		catch (Exception e) {
+			System.out.println("Could not close streams");
+			disconnectFromServer();
+			e.printStackTrace();
+		}
+	}
+
 	/****************************************************************
 	 * Join lobby in session
 	 * 
@@ -140,7 +181,15 @@ public class ClientModel {
 			String response = inData.readUTF();
 			boolean dc = false;
 
-			if (response.equals("SUCCESS")) {
+			StringTokenizer tokenizer = new StringTokenizer(response);
+
+			String resCode = tokenizer.nextToken();
+			if (resCode.equals("SUCCESS")) {
+				gui.getGamePanel().setPlayers(Integer.parseInt(tokenizer.nextToken()));
+				gui.getGamePanel().setBoardSize(Integer.parseInt(tokenizer.nextToken()));
+				playerNumber = Integer.parseInt(tokenizer.nextToken());
+				gui.getGamePanel().initBoard();
+
 				gui.rmStartButtonFromNonHost();
 				gui.swapPanel("lobby");
 				
@@ -154,7 +203,8 @@ public class ClientModel {
 								gui.generateDialog("Error Starting Game", "Error");
 							}
 							else {
-								gui.swapPanel("game");
+								inGame = true;
+								play();
 							}
 						}
 						catch (Exception e) {
@@ -166,22 +216,21 @@ public class ClientModel {
 					}
 				});
 				responseListener.start();
-				
 			}
 			else if (response.equals("LOBBY_LIMIT_REACHED")) {
 				gui.generateDialog("Max players Exceeded", "Could not join");
-				System.out.println("Max players exceeded. Cannot join");
+				System.out.println(response);
 			}
 			else if (response.equals("USERNAME_IN_USE")) {
 				gui.generateDialog("Username already in use", "Could not join");
-				System.out.println("Username in use. try another");
+				System.out.println(response);
 				// disconnect user from server and let 
 				// them reconnect with diff uName
 				dc = true;
 			}
 			else if (response.equals("NO_HOST_AVAILABLE")) {
 				gui.generateDialog("No games to join", "Could not join");
-				System.out.println("No one currently hosting");
+				System.out.println(response);
 			}
 
 			inData.close();
@@ -192,105 +241,6 @@ public class ClientModel {
 			}
 		}
 		catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	/****************************************************************
-	 * Request server to send updated player list to update 
-	 * lobbyTable
-	 * 
-	 ***************************************************************/
-	@SuppressWarnings("unchecked")
-	private void updatePlayerList() {
-		System.out.println("refreshing...");
-
-		try {
-
-			String command = "get-players";
-			port += 2;
-
-			ServerSocket welcomeData = new ServerSocket(port);
-			String dataToServer = port + " " + command;
-			toServer.writeUTF(dataToServer);
-			System.out.println("Writing \'" + dataToServer + "\' to server");
-
-			Socket dataSocket = welcomeData.accept();
-			ObjectInputStream ois = new ObjectInputStream(dataSocket.getInputStream());
-
-			Vector<PlayerInfo> currentPlayers = (Vector<PlayerInfo>) ois.readObject();
-
-			String[] playerUserNames = new String[currentPlayers.size()];
-			int[] playerNums = new int[currentPlayers.size()];
-
-			System.out.println("Receieved:");
-
-			for (int i = 0; i < currentPlayers.size(); i++) {
-				playerUserNames[i] = currentPlayers.get(i).getUserName();
-				playerNums[i] = currentPlayers.get(i).getPlayerNumber();
-				System.out.println("\t" + playerUserNames[i] + " " + playerNums[i]);
-			}
-
-			gui.updateLobbyTable(playerUserNames, playerNums);
-			
-			ois.close();
-			dataSocket.close();
-			welcomeData.close();
-		}
-		catch (Exception e) {
-			System.err.println("Could not get player list");
-			e.printStackTrace();
-		}
-	}
-
-	/****************************************************************
-	 * Request server to host a new game. 
-	 * 
-	 * If there is already a host,
-	 * will be be denied. Else it will establish a newly hosted game
-	 * with server
-	 * 
-	 ****************************************************************/
-    private void hostGame() {
-		try {
-			if (!connectToServer('h')) {
-				return;
-			}
-
-			String command = "host";
-			port += 2;
-			String boardSizeDims = gui.getBoardSizeBox().getSelectedItem().toString();
-			// convert 10x10 to for server side parsing
-			int boardSize = Integer.parseInt(boardSizeDims.substring(0, boardSizeDims.indexOf("x")));
-			String numPlayers = gui.getNumPlayersBox().getSelectedItem().toString();
-
-			ServerSocket welcomeData = new ServerSocket(port);
-			String dataToServer = port + " " + command + " " + numPlayers + " " + boardSize;
-
-			toServer.writeUTF(dataToServer);
-			System.out.println("Sending \'" + dataToServer + "\' to server");
-
-			Socket dataSocket = welcomeData.accept();
-			DataInputStream inData = new DataInputStream(new BufferedInputStream(dataSocket.getInputStream()));
-			String response = inData.readUTF();
-			if (response.equals("SUCCESS")) {
-				isHosting = true;
-				gui.swapPanel("lobby");
-			}
-			else if (response.equals("ERROR_HOST_IN_SESSION")) {
-				gui.generateDialog("Someone is already hosting a game", "Could not host game");
-			}
-			else {
-				gui.generateDialog("Could not host game", "Could not host game");
-				System.out.println("Could not host game\nError code from server: " + response);
-			}
-			inData.close();
-			dataSocket.close();
-			welcomeData.close();
-		}
-		catch (Exception e) {
-			System.out.println("Could not close streams");
-			disconnectFromServer();
 			e.printStackTrace();
 		}
 	}
@@ -346,10 +296,12 @@ public class ClientModel {
 	 * Tell server host started the game
 	 * Set state to inGame
 	 * 
+	 * ONLY HOST CALLS THIS
+	 * 
 	 ***************************************************************/
-	public void play() {
+	public void startGame() {
 		try {
-			String command = "play";
+			String command = "start-game";
 			port += 2;
 
 			ServerSocket welcomeData = new ServerSocket(port);
@@ -363,10 +315,7 @@ public class ClientModel {
 			String response = inData.readUTF();
 			if (response.equals("SUCCESS")) {
 				inGame = true;
-
-				// while(inGame) {
-				// 	waitForUpdate();
-				// }
+				play();
 			}
 			else if (response.equals("INVALID_HOST")) {
 				gui.generateDialog("Must be a host to start the game", "Could not start game");
@@ -388,6 +337,37 @@ public class ClientModel {
 		}
 	}
 
+
+	private void play() {
+		System.out.println("Playing game");
+		
+		
+		gui.swapPanel("game");
+
+		// listen for updates
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				while (inGame) {
+					waitForUpdate();
+				}
+			}
+		});
+
+		while (inGame) {
+			if (myTurn) {
+				// do move
+				// let JIcons iteractable
+
+				// send move data to server dataStream
+			}
+
+			myTurn = false;
+		}
+		
+	}
+
+
 	private boolean waitForGameStart() throws Exception {
 		String fromServer = inFromServer.readUTF();
 
@@ -403,12 +383,27 @@ public class ClientModel {
 	 * Wait for server message
 	 * 
 	 * @throws Exception input stream was closed abruptly
+	 * 
+	 * 'playerNum move x y'
+	 * 'playerNum lose'
+	 * 'playerNum win'
 	 ***************************************************************/
-	private void waitForUpdate() throws Exception {
-		System.out.println("Awaiting broadcast...");
-		String fromServer = inFromServer.readUTF();
-		System.out.println("processing BROADCAST: " + fromServer);
-		processUpdate(fromServer);
+	private void waitForUpdate() {
+		try {
+			System.out.println("Awaiting info from server");
+			String fromServer = inFromServer.readUTF();
+			StringTokenizer tokenizer = new StringTokenizer(fromServer);
+
+			String command = tokenizer.nextToken();
+
+			System.out.println("receieved " + command);
+
+			processUpdate(command);
+		}
+		catch (Exception e) {
+
+		}
+
 	}
 
 	/****************************************************************
@@ -418,13 +413,53 @@ public class ClientModel {
 	 * @param serverCommand command and args received by server
 	 ***************************************************************/
 	private void processUpdate(String serverCommand) {
-		String firstLine;
-		StringTokenizer tokens = new StringTokenizer(serverCommand);
+		
+	}
 
-		firstLine = tokens.nextToken();
+	/****************************************************************
+	 * Request server to send updated player list to update 
+	 * lobbyTable
+	 * 
+	 ***************************************************************/
+	@SuppressWarnings("unchecked")
+	private void updatePlayerList() {
+		System.out.println("refreshing...");
 
-		if (firstLine.equals("start-game")) {
-			gui.swapPanel("game");
+		try {
+
+			String command = "get-players";
+			port += 2;
+
+			ServerSocket welcomeData = new ServerSocket(port);
+			String dataToServer = port + " " + command;
+			toServer.writeUTF(dataToServer);
+			System.out.println("Writing \'" + dataToServer + "\' to server");
+
+			Socket dataSocket = welcomeData.accept();
+			ObjectInputStream ois = new ObjectInputStream(dataSocket.getInputStream());
+
+			Vector<PlayerInfo> currentPlayers = (Vector<PlayerInfo>) ois.readObject();
+
+			String[] playerUserNames = new String[currentPlayers.size()];
+			int[] playerNums = new int[currentPlayers.size()];
+
+			System.out.println("Receieved:");
+
+			for (int i = 0; i < currentPlayers.size(); i++) {
+				playerUserNames[i] = currentPlayers.get(i).getUserName();
+				playerNums[i] = currentPlayers.get(i).getPlayerNumber();
+				System.out.println("\t" + playerUserNames[i] + " " + playerNums[i]);
+			}
+
+			gui.updateLobbyTable(playerUserNames, playerNums);
+			
+			ois.close();
+			dataSocket.close();
+			welcomeData.close();
+		}
+		catch (Exception e) {
+			System.err.println("Could not get player list");
+			e.printStackTrace();
 		}
 	}
 
@@ -492,6 +527,31 @@ public class ClientModel {
 	 public void quitGame() {
 		disconnectFromServer();
 		System.exit(0);
+	}
+
+	/****************************************************************
+	 * Check that IP and username is valid before allowing
+	 * 
+	 * @return true if valid, false otherwise
+	 ***************************************************************/
+	private boolean verifyConnectionInputs() {
+		serverHostIP = gui.getServerHostIPField().getText();
+
+        // Check that is IP format
+        if (!serverHostIP.matches("(\\d{1,3}\\.){3}\\d{1,3}")) {
+			gui.generateDialog("Invalid IP", "Invalid IP");
+            System.out.println("Invalid IP");
+            return false;
+        }
+
+		// username cannot contain spaces or be empty
+		userName = gui.getUserNameField().getText();
+		if (userName.equals("") || userName.contains(" ")) {
+			gui.generateDialog("Invalid Username, try one without spaces", "Invalid Username");
+			System.out.println("Invalid username, cannot contain spaces and cannot be empty");		
+			return false;
+		}
+		return true;
 	}
 
 	public static void main(String[] args) {

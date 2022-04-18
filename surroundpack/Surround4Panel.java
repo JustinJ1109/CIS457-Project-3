@@ -36,8 +36,7 @@ public class Surround4Panel extends JPanel {
 
     private Color[] playerColors = {Color.RED, Color.BLUE, Color.YELLOW, Color.GREEN, Color.ORANGE};
 
-    public Surround4Panel() {
-        
+    public void initBoard() {
         listen = new ButtonListener();
 
         setLayout(new BorderLayout());
@@ -45,32 +44,7 @@ public class Surround4Panel extends JPanel {
         panel2 = new JPanel();
         panel3 = new JPanel();
 
-        try {
-            // FIXME: 
-            boardSize = 5;
-            if(boardSize <= 3 || boardSize >= 20) {
-                //Jumps to catch statement
-                throw new NumberFormatException();
-            }
-        }
-        catch(NumberFormatException e){
-            JOptionPane.showMessageDialog(null,
-                    "Invalid input.");
-        }
-
-        try {
-            numPlayers = 2;
-            if(numPlayers < 2 || numPlayers > 99) {
-                //Jumps to catch statement
-                throw new NumberFormatException();
-            }
-        }
-        catch(NumberFormatException e){
-            JOptionPane.showMessageDialog(null,
-                    "Invalid input.");
-        }
         
-        startingPlayer = 0;
         createScores();
 
         game = new Surround4Game(boardSize,numPlayers,startingPlayer);
@@ -260,5 +234,13 @@ public class Surround4Panel extends JPanel {
     private void displayScores() {
         for(int i = 0; i < scores.length; i++)
             scoreLabels[i].setForeground(playerColors[i]);
+    }
+
+    public void setBoardSize(int size) {
+        boardSize = size;
+    }
+
+    public void setPlayers(int players) {
+        numPlayers = players;
     }
 }
