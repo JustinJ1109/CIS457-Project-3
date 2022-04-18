@@ -125,7 +125,7 @@ public class ServerHandler extends Thread {
 
 			removePlayer(p);
 			System.out.println(" ");
-		    e.printStackTrace();
+		    // e.printStackTrace();
         }
 		finally {
 			handlers.removeElement(this);
@@ -410,13 +410,15 @@ public class ServerHandler extends Thread {
 				dataOutToClient.writeUTF("SUCCESS");
 
 				int winner = gameInstance.getWinner();
+
 				if (winner > -1) {
 					// winner
 					broadcast("winner " + winner);
 				}
 				else if (winner == -1) {
 					// no winner
-					broadcast(currentPlayer + " " + row + " " + col + " " + gameInstance.nextPlayer());
+					
+					broadcast(currentPlayer + " " + row + " " + col + " " + (currentPlayer = gameInstance.nextPlayer()));
 				}
 				else {
 					// tie
