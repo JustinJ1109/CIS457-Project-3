@@ -20,11 +20,18 @@ public class Surround4Game {
      * to 10 and max players of 2 starting with player 0
      *
      *****************************************************************/
-    public Surround4Game() {
+    public Surround4Game(int boardSize, int startingPlayer, int[] remainingPlayerNums) {
         //super();
-        board = new Cell[10][10];
-        this.player = 0;
-        remainingPlayers = new int[]{0, 1};
+        this.boardSize = boardSize;
+        board = new Cell[boardSize][boardSize];
+        this.player = startingPlayer;
+        remainingPlayers = remainingPlayerNums;
+
+        // set all to in game
+        playerStatus = new int[remainingPlayers.length];
+        for (int i = 0; i < playerStatus.length; i++) {
+            playerStatus[i] = 1;
+        }
     }
 
     /******************************************************************
@@ -67,7 +74,6 @@ public class Surround4Game {
      * @return returns a Cell at the row and column
      *****************************************************************/
     public Cell getCell(int row, int col) {
-
         return board[row][col];
     }
 
