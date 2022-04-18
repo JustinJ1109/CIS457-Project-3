@@ -26,6 +26,8 @@ public class ClientModel {
 	private final int controlPort = 1370;
 	private int port;
 
+	protected static boolean renderingOpponent;
+
 
 	private boolean isHosting;
 	private boolean connectedToServer;
@@ -463,18 +465,17 @@ public class ClientModel {
 			currentPlayer = Integer.parseInt(tokens.nextToken());
 		}
 
+		renderingOpponent = true;
+		System.out.println("Updating opponent color");
+		gui.getGamePanel().setTile(row, col, playerThatWent);
+
 		if (currentPlayer == playerNumber) {
 			System.out.println("My turn");
 			// my turn, allow modifying
 			setBoardClickable(true);
 			myTurn = true;
 		}
-		else {
 			// other turn was updated
-			JButton theirTile = gui.getGamePanel().setTile(row, col, playerThatWent);
-			theirTile.doClick();
-
-		}
 	}
 
 	/****************************************************************
@@ -520,32 +521,6 @@ public class ClientModel {
 		}
 		catch (Exception e) {
 			System.err.println("Could not get player list");
-			e.printStackTrace();
-		}
-	}
-
-	/****************************************************************
-	 * NOT IN USE YET
-	 ***************************************************************/
-	public void placeTile(int x, int y) {
-		String command = "place";
-		port += 2;
-
-		try {
-			ServerSocket welcomeData = new ServerSocket(port);
-			toServer.writeUTF(port + " " + command + " " + x + " " + y);
-
-			Socket dataSocket = welcomeData.accept();
-			DataInputStream inData = new DataInputStream(new BufferedInputStream(dataSocket.getInputStream()));
-
-			System.out.println("Received " + inData.readUTF());
-			
-			inData.close();
-			dataSocket.close();
-			welcomeData.close();
-		}
-		catch (Exception e) {
-			System.err.println("Could not write command");
 			e.printStackTrace();
 		}
 	}
@@ -647,6 +622,7 @@ public class ClientModel {
 				String response = inData.readUTF();
 				if (response.equals("SUCCESS")) {
 					inGame = true;
+					renderingOpponent = false;
 					gui.getGamePanel().setTile(selectedCoords[0], selectedCoords[1], playerNumber);
 					selectedTile = true;
 
@@ -659,7 +635,6 @@ public class ClientModel {
 				// 	System.out.println("Could not move at specified location");
 				// }
 				
-
 				inData.close();
 				dataSocket.close();
 				welcomeData.close();
@@ -667,12 +642,11 @@ public class ClientModel {
 			catch (Exception er) {
 				gui.generateDialog("Something went wrong", "idk");
 			}
-
 		}
 	}
 
 	/****************************************************************
-	 * Add/Remove button listners from board
+	 * Add/Remove button listeners from board
 	 * 
 	 * @param yes true if adding listeners, false if removing
 	 ***************************************************************/
