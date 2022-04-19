@@ -116,7 +116,6 @@ public class ServerHandler extends Thread {
 
 			removePlayer(p);
 			System.out.println(" ");
-		    e.printStackTrace();
         }
 		finally {
 			handlers.removeElement(this);
