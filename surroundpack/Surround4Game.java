@@ -1,5 +1,7 @@
 package surroundpack;
 
+import javax.management.monitor.GaugeMonitor;
+
 /**
  * Main handler that handles all the logic behind cell interactions
  */
@@ -177,42 +179,65 @@ public class Surround4Game {
      * @return returns true if the cell is surrounded, else false.
      *****************************************************************/
     public boolean isSurrounded(int row, int col) {
+        // get all adjacent cells
 
-        //set cell to seen
-        board[row][col].setSeen(true);
+        boolean inLBounds = false, inRBounds = false, inUBounds = false, inDBounds = false;
 
-        if (board[row + 1][col] == null || board[row - 1][col] == null ||
-                board[row][col + 1] == null || board[row][col - 1] == null) {
+        Cell thisCell = board[row][col];
+
+        thisCell.setSeen(true);
+        
+        if (row - 1 >= 0) {
+            inLBounds = true;
+            if (board[row-1][col] == null)
             return false;
-        } else {
-            // if there is a friendly tile touching that hasn't been looked at, re-call method on that tile
-            if (row + 1 < board.length && board[row + 1][col].getPlayerNumber() == board[row][col].getPlayerNumber() &&
-                    !board[row + 1][col].isSeen()) {
-
-                if (!isSurrounded(row + 1, col))
-                    return false;
-            }
-            if (row - 1 > 0 && board[row - 1][col].getPlayerNumber() == board[row][col].getPlayerNumber() &&
-                    !board[row - 1][col].isSeen()) {
-
-                if (!isSurrounded(row - 1, col))
-                    return false;
-            }
-
-            if (col + 1 < board[0].length && board[row][col + 1].getPlayerNumber() == board[row][col].getPlayerNumber() &&
-                    !board[row][col + 1].isSeen()) {
-
-                if (!isSurrounded(row, col + 1))
-                    return false;
-            }
-
-            if (col - 1 > 0 && board[row][col - 1].getPlayerNumber() == board[row][col].getPlayerNumber() &&
-                    !board[row][col - 1].isSeen()) {
-
-                if (!isSurrounded(row, col - 1))
-                    return false;
-            }
         }
+        if (row + 1 < board.length) {
+            inRBounds = true;
+            if (board[row+1][col] == null)
+            return false;
+        }
+
+        if (col - 1 >= 0) {
+            inDBounds = true;
+            if (board[row][col-1] == null)
+            return false;
+        }
+
+        if (col + 1 < board.length) {
+            inUBounds = true;
+            if (board[row][col+1] == null)
+            return false;
+        }
+
+        if (inLBounds && board[row-1][col].getPlayerNumber() == thisCell.getPlayerNumber() &&
+            !board[row-1][col].isSeen()) {
+                if (!isSurrounded(row-1, col)) {
+                    return false;
+                }
+            }
+
+        if (inRBounds && board[row+1][col].getPlayerNumber() == thisCell.getPlayerNumber() &&
+            !board[row+1][col].isSeen()) {
+                if (!isSurrounded(row+1, col)) {
+                    return false;
+                }
+        }
+
+        if (inUBounds && board[row][col+1].getPlayerNumber() == thisCell.getPlayerNumber() &&
+            !board[row][col+1].isSeen()) {
+                if (!isSurrounded(row, col+1)) {
+                    return false;
+                }
+        }
+
+        if (inDBounds && board[row][col-1].getPlayerNumber() == thisCell.getPlayerNumber() &&
+            !board[row][col-1].isSeen()) {
+                if (!isSurrounded(row, col-1)) {
+                    return false;
+                }
+        }
+
         return true;
     }
 
