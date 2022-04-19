@@ -9,7 +9,7 @@
  * 			Noah Meyers
  */
 
-import java.io.*; 
+import java.io.*;
 import java.net.*;
 import java.util.*;
 
@@ -27,7 +27,6 @@ public class ClientModel {
 	private int port;
 
 	protected static boolean renderingOpponent;
-
 
 	private boolean isHosting;
 	private boolean connectedToServer;
@@ -69,6 +68,7 @@ public class ClientModel {
 				startGame();
 				if (isHosting)
 					new Thread(() -> play()).start();
+					System.out.println("HOST THREAD CLOSED");
 			}
 		});		
 	}
@@ -77,6 +77,8 @@ public class ClientModel {
 	 * establish connection with server 
 	 * 
 	 * Open IO control sockets and send to server
+	 * @param hc char character of values 'h' or 'c' - whether the user
+	 * calls as host or client
 	 ***************************************************************/
     private boolean connectToServer(char hc) {
 		if (!connectedToServer) {
@@ -176,10 +178,9 @@ public class ClientModel {
 	}
 
 	/****************************************************************
-	 * Join lobby in session
-	 * set state to inGame once reaches
+	 * Join lobby in session and dispatch server listener thread
+	 * until server starts game
 	 * 
-	 * wait for server to broadcast start-game
 	 ***************************************************************/
 	public void joinLobby() {
 
@@ -230,7 +231,7 @@ public class ClientModel {
 							e.printStackTrace();
 						}
 
-						System.out.println("CLOSING SUBTHREAD");
+						System.out.println("CLOSING JOINTHREAD");
 					}
 				});
 				responseListener.start();
@@ -264,7 +265,8 @@ public class ClientModel {
 	}
 
 	/****************************************************************
-	 * Tell server client is leaving the lobby.
+	 * Tell server client is leaving the lobby. Calls 
+	 * disconnectFromServer()
 	 * 
 	 ***************************************************************/
 	private void leaveLobby() {
@@ -395,6 +397,7 @@ public class ClientModel {
 				
 			}
 		}).start();
+		System.out.println("GAME THEAD ENDED");
 	}
 
 	/****************************************************************
@@ -453,11 +456,7 @@ public class ClientModel {
 			}
 			return;
 		}
-		else if (firstTok.equals("winner")) {
-			int winner = Integer.parseInt(tokens.nextToken());
-			gui.generateDialog("Player " + winner + " won!", "Game Over");
-			return;
-		}
+		// receiving player move data
 		else {
 			playerThatWent = Integer.parseInt(firstTok);
 			row = Integer.parseInt(tokens.nextToken());
@@ -466,8 +465,22 @@ public class ClientModel {
 		}
 
 		renderingOpponent = true;
-		System.out.println("Updating opponent color");
 		gui.getGamePanel().setTile(row, col, playerThatWent);
+
+		try {
+			if (tokens.nextToken().equals("winner")) {
+				
+				gui.generateDialog("Player " + playerThatWent + " won!", "Game Over");
+				disconnectFromServer();
+				gui.swapPanel("menu");
+				gui.getGamePanel().resetBoard();
+				
+				return;
+			}
+		}
+		catch (Exception e) {
+			System.out.println("NO WINNER");
+		}
 
 		if (currentPlayer == playerNumber) {
 			System.out.println("My turn");
@@ -630,10 +643,10 @@ public class ClientModel {
 
 					//TODO: set currentPlayer
 				}
-				// else if (response.equals("INVALID_MOVE")) {
-				// 	gui.generateDialog("Invalid Move", "Invalid Move");
-				// 	System.out.println("Could not move at specified location");
-				// }
+				else if (response.equals("INVALID_MOVE")) {
+					gui.generateDialog("Invalid Move", "Invalid Move");
+					System.out.println("Could not move at specified location");
+				}
 				
 				inData.close();
 				dataSocket.close();
@@ -641,6 +654,7 @@ public class ClientModel {
 			}
 			catch (Exception er) {
 				gui.generateDialog("Something went wrong", "idk");
+				er.printStackTrace();
 			}
 		}
 	}
