@@ -4,7 +4,7 @@
  * @version 4.17.22
  * @author  Justin Jahlas, 
  * 			Brennan Luttrel, 
- * 			Munu Bhai, 
+ * 			Prakash Lingden, 
  * 			Cole Blunt, 
  * 			Noah Meyers
  */
@@ -70,11 +70,9 @@ public class ClientModel {
 			public void actionPerformed(ActionEvent e) {
 				startGame();
 				if (isHosting) {
-					System.out.println("Starting host thread");
 					new Thread(() -> play()).start();
 
 				}
-				System.out.println("HOST THREAD CLOSED");
 			}
 		});		
 
@@ -109,13 +107,13 @@ public class ClientModel {
 				String dataToServer = serverHostIP + " " + port + " " + userName;
 
 				toServer.writeUTF(dataToServer) ;
-				System.out.println("Sent " + dataToServer + " to server");
+				// System.out.println("Sent " + dataToServer + " to server");
 				connectedToServer = true;			
 				
 			}
 			catch (Exception e) {
 				gui.generateDialog("Could not connect to host", "Error Connecting");
-				System.out.println("Unable to connect to host: " + serverHostIP + " on port " + controlPort);
+				System.err.println("Unable to connect to host: " + serverHostIP + " on port " + controlPort);
 				e.printStackTrace();
 				return false;
 			}
@@ -151,7 +149,7 @@ public class ClientModel {
 			String dataToServer = port + " " + command + " " + numPlayers + " " + boardSize;
 
 			toServer.writeUTF(dataToServer);
-			System.out.println("Sending \'" + dataToServer + "\' to server");
+			// System.out.println("Sending \'" + dataToServer + "\' to server");
 
 			Socket dataSocket = welcomeData.accept();
 			DataInputStream inData = new DataInputStream(new BufferedInputStream(dataSocket.getInputStream()));
@@ -175,14 +173,14 @@ public class ClientModel {
 			}
 			else {
 				gui.generateDialog("Could not host game", "Could not host game");
-				System.out.println("Could not host game\nError code from server: " + response);
+				System.err.println("Could not host game\nError code from server: " + response);
 			}
 			inData.close();
 			dataSocket.close();
 			welcomeData.close();
 		}
 		catch (Exception e) {
-			System.out.println("Could not close streams");
+			System.err.println("Could not close streams");
 			disconnectFromServer();
 			e.printStackTrace();
 		}
@@ -206,7 +204,7 @@ public class ClientModel {
 			String dataToServer = port + " " + command;
 
 			toServer.writeUTF(dataToServer);
-			System.out.println("Sending \'" + dataToServer + "\' to server");
+			// System.out.println("Sending \'" + dataToServer + "\' to server");
 
 			Socket dataSocket = welcomeData.accept();
 			DataInputStream inData = new DataInputStream(new BufferedInputStream(dataSocket.getInputStream()));
@@ -226,7 +224,6 @@ public class ClientModel {
 				
 				// await for server response in subthread
 				// lets user still interact with GUI, doesn't freeze
-				System.out.println("Opening join thread");
 				Thread responseListener = new Thread(new Runnable() {
 					@Override
 					public void run() {
@@ -243,25 +240,24 @@ public class ClientModel {
 							
 							e.printStackTrace();
 						}
-						System.out.println("CLOSING JOINTHREAD");
 					}
 				});
 				responseListener.start();
 			}
 			else if (response.equals("LOBBY_LIMIT_REACHED")) {
 				gui.generateDialog("Max players Exceeded", "Could not join");
-				System.out.println(response);
+				System.err.println(response);
 			}
 			else if (response.equals("USERNAME_IN_USE")) {
 				gui.generateDialog("Username already in use", "Could not join");
-				System.out.println(response);
+				System.err.println(response);
 				// disconnect user from server and let 
 				// them reconnect with diff uName
 				dc = true;
 			}
 			else if (response.equals("NO_HOST_AVAILABLE")) {
 				gui.generateDialog("No games to join", "Could not join");
-				System.out.println(response);
+				System.err.println(response);
 			}
 
 			inData.close();
@@ -296,7 +292,7 @@ public class ClientModel {
 			String dataToServer = port + " " + command;
 
 			toServer.writeUTF(dataToServer);
-			System.out.println("Sending \'" + dataToServer + "\' to server");
+			// System.out.println("Sending \'" + dataToServer + "\' to server");
 
 			Socket dataSocket = welcomeData.accept();
 			DataInputStream inData = new DataInputStream(new BufferedInputStream(dataSocket.getInputStream()));
@@ -310,7 +306,7 @@ public class ClientModel {
 			}
 			else {
 				gui.generateDialog("Could not host game", "Could not host game");
-				System.out.println("Could not end host game\nError code from server: " + response);
+				System.err.println("Could not end host game\nError code from server: " + response);
 			}
 			inData.close();
 			dataSocket.close();
@@ -340,7 +336,7 @@ public class ClientModel {
 			String dataToServer = port + " " + command;
 
 			toServer.writeUTF(dataToServer);
-			System.out.println("Sending \'" + dataToServer + "\' to server");
+			// System.out.println("Sending \'" + dataToServer + "\' to server");
 
 			Socket dataSocket = welcomeData.accept();
 			DataInputStream inData = new DataInputStream(new BufferedInputStream(dataSocket.getInputStream()));
@@ -352,18 +348,18 @@ public class ClientModel {
 			}
 			else if (response.equals("INVALID_HOST")) {
 				gui.generateDialog("Must be a host to start the game", "Could not start game");
-				System.out.println("Must be host to start the game");
+				System.err.println("Must be host to start the game");
 			}
 			else {
 				gui.generateDialog("Could not start game", response);
-				System.out.println("Could not start game\nError code from server: " + response);
+				System.err.println("Could not start game\nError code from server: " + response);
 			}
 			inData.close();
 			dataSocket.close();
 			welcomeData.close();
 		}
 		catch (Exception e) {
-			System.out.println("Could not connect to server");
+			System.err.println("Could not connect to server");
 			gui.generateDialog("Could not connect to server", "Error connecting");
 			disconnectFromServer();
 			e.printStackTrace();
@@ -381,7 +377,6 @@ public class ClientModel {
 	 ***************************************************************/
 	private boolean waitForGameStart() throws Exception {
 		String fromServer = inFromServer.readUTF();
-		System.out.println("Received \'" + fromServer +"\' waitForGameStart");
 		StringTokenizer tokenizer = new StringTokenizer(fromServer);
 		if (tokenizer.nextToken().equals("start-game")) {
 			//TODO: setCurrentPlayer
@@ -401,14 +396,12 @@ public class ClientModel {
 	private void play() {
 		gui.swapPanel("game");
 
-		System.out.println("Starting game thread");
 
 		// listen for updates from server
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
 				waitForUpdate();
-				System.out.println("GAME THREAD ENDED");
 			}
 		}).start();
 	}
@@ -425,11 +418,7 @@ public class ClientModel {
 	private void waitForUpdate() {
 		while(inGame) {
 			try {
-				// System.out.println("Awaiting info from server");
 				String fromServer = inFromServer.readUTF();
-
-				System.out.println("receieved \'" + fromServer +"\' waitForUpdate");
-
 				processUpdate(fromServer);
 			}
 			catch (Exception e) {
@@ -461,7 +450,6 @@ public class ClientModel {
 		else if (firstTok.equals("start")) {
 			currentPlayer = Integer.parseInt(tokens.nextToken());
 			if (currentPlayer == playerNumber) {
-				System.out.println("My turn");
 				// my turn, allow modifying
 				setBoardClickable(true);
 				myTurn = true;
@@ -491,12 +479,9 @@ public class ClientModel {
 			}
 		}
 		catch (Exception e) {
-			System.out.println("NO WINNER");
 		}
 
 		if (currentPlayer == playerNumber) {
-			System.out.println("My turn");
-			// my turn, allow modifying
 			setBoardClickable(true);
 			myTurn = true;
 		}
@@ -510,8 +495,6 @@ public class ClientModel {
 	 ***************************************************************/
 	@SuppressWarnings("unchecked")
 	private void updatePlayerList() {
-		System.out.println("refreshing...");
-
 		try {
 
 			String command = "get-players";
@@ -520,7 +503,7 @@ public class ClientModel {
 			ServerSocket welcomeData = new ServerSocket(port);
 			String dataToServer = port + " " + command;
 			toServer.writeUTF(dataToServer);
-			System.out.println("Writing \'" + dataToServer + "\' to server");
+			// System.out.println("Writing \'" + dataToServer + "\' to server");
 
 			Socket dataSocket = welcomeData.accept();
 			ObjectInputStream ois = new ObjectInputStream(dataSocket.getInputStream());
@@ -602,7 +585,7 @@ public class ClientModel {
         // Check that is IP format
         if (!serverHostIP.matches("(\\d{1,3}\\.){3}\\d{1,3}")) {
 			gui.generateDialog("Invalid IP", "Invalid IP");
-            System.out.println("Invalid IP");
+            System.err.println("Invalid IP");
             return false;
         }
 
@@ -610,7 +593,7 @@ public class ClientModel {
 		userName = gui.getUserNameField().getText();
 		if (userName.equals("") || userName.contains(" ")) {
 			gui.generateDialog("Invalid Username, try one without spaces", "Invalid Username");
-			System.out.println("Invalid username, cannot contain spaces and cannot be empty");		
+			System.err.println("Invalid username, cannot contain spaces and cannot be empty");		
 			return false;
 		}
 		return true;
@@ -627,7 +610,6 @@ public class ClientModel {
 	private class ButtonListener implements ActionListener {
 		@Override
         public void actionPerformed(ActionEvent e) {
-			System.out.println("Clicked");
 			BoardPiece clicked = (BoardPiece) e.getSource();
 			selectedCoords[0] = clicked.getYVal();
 			selectedCoords[1] = clicked.getXVal();
@@ -641,7 +623,7 @@ public class ClientModel {
 				String dataToServer = port + " " + command + " " + selectedCoords[0] + " " + selectedCoords[1];
 	
 				toServer.writeUTF(dataToServer);
-				System.out.println("Sending \'" + dataToServer + "\' to server");
+				// System.out.println("Sending \'" + dataToServer + "\' to server");
 	
 				Socket dataSocket = welcomeData.accept();
 				DataInputStream inData = new DataInputStream(new BufferedInputStream(dataSocket.getInputStream()));
@@ -658,7 +640,7 @@ public class ClientModel {
 				}
 				else if (response.equals("INVALID_MOVE")) {
 					gui.generateDialog("Invalid Move", "Invalid Move");
-					System.out.println("Could not move at specified location");
+					System.err.println("Could not move at specified location");
 				}
 				
 				inData.close();
@@ -696,5 +678,4 @@ public class ClientModel {
 		GUI gui = new GUI("Surround Game");
 		ClientModel cm = new ClientModel(gui, args.length != 1 ? 1370 : Integer.parseInt(args[0]));
 	}
-
 }   

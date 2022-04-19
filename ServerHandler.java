@@ -4,7 +4,7 @@
  * @version 4.17.22
  * @author  Justin Jahlas, 
  * 			Brennan Luttrel, 
- * 			Munu Bhai, 
+ * 			Prakash Lingden, 
  * 			Cole Blunt, 
  * 			Noah Meyers
  */
@@ -17,7 +17,6 @@ import java.text.SimpleDateFormat;
 import java.util.Enumeration;
 import java.util.StringTokenizer;
 import java.util.Vector;
-
 import surroundpack.Surround4Game;
 
 /********************************************************************
@@ -198,6 +197,7 @@ public class ServerHandler extends Thread {
 			port = Integer.parseInt(firstLine);
 		}
 		catch (Exception e) {
+			printDate();
 			System.out.println("\nERROR Could not parse \'" + port + "\' as int");
 			return;
 		}
@@ -235,7 +235,8 @@ public class ServerHandler extends Thread {
 				maxPlayers = numPlayers;
 			}
 			catch (NumberFormatException e) {
-				System.out.println("\n\tUnable to convert numPlayers or boardSize to int");
+				printDate();
+				System.out.println("\nERROR Unable to convert numPlayers or boardSize to int");
 				return;
 			}
 
@@ -408,7 +409,7 @@ public class ServerHandler extends Thread {
 					// winner
 					// broken here. something wrong in Surround4Game logic
 					printDate();
-					System.out.println("GAME WON by player " + currentPlayer);
+					System.out.println("[" + currentPlayer + "] won the game");
 					broadcast(currentPlayer + " " + row + " " + col + " " + winner + " winner");
 				}
 				else if (winner == -1) {
@@ -418,7 +419,7 @@ public class ServerHandler extends Thread {
 				}
 				else {
 					printDate();
-					System.out.println("GAME WON by player " + winner);
+					System.out.println("[" + currentPlayer + "] won the game");
 					broadcast(currentPlayer + " " + row + " " + col + " " + (currentPlayer = 0) + " winner");
 					gameInstance.reset();
 					// tie

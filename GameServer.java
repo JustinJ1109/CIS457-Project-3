@@ -4,7 +4,7 @@
  * @version 4.17.22
  * @author  Justin Jahlas, 
  * 			Brennan Luttrel, 
- * 			Munu Bhai, 
+ * 			Prakash Lingden, 
  * 			Cole Blunt, 
  * 			Noah Meyers
  */
@@ -25,7 +25,7 @@ public class GameServer {
         boolean listening = true;
         ServerHandler sh;
 
-        int listenPort = args.length != 1 ? 1370 : Integer.parseInt(args[0]);
+        int listenPort = args.length != 1 ? DEFAULT_LISTENING_PORT : Integer.parseInt(args[0]);
 
         try {
             serverSocket = new ServerSocket(listenPort);
@@ -43,7 +43,7 @@ public class GameServer {
                 t.start();
             }
             catch (Exception e) {
-                System.out.println("Could not open thread");
+                System.err.println("Could not open thread");
                 e.printStackTrace();
             }
         }
