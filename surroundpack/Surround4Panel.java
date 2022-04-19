@@ -20,6 +20,12 @@ public class Surround4Panel extends JPanel {
 
     private BoardPiece[][] board;
 
+    // private static boolean boardCreated;
+
+    // public Surround4Panel() {
+    //     boardCreated = true;
+    // }
+
     private JPanel panel1, panel2, panel3;
     private int 
         boardSize, numPlayers, startingPlayer, 
@@ -43,20 +49,14 @@ public class Surround4Panel extends JPanel {
 
         createScores();
 
-        game = new Surround4Game(boardSize,numPlayers,startingPlayer);
+        //game = new Surround4Game(boardSize,numPlayers,startingPlayer);
         createBoard();
 
+        
         add(panel2, BorderLayout.NORTH);
+        // if (boardCreated)
         add(panel1, BorderLayout.CENTER);
         add(panel3, BorderLayout.SOUTH);
-    }
-
-    public void resetBoard() {
-        for (int i = 0; i < boardSize; i++) {
-            for (int j = 0; j < boardSize; j++) {
-                board[i][j].setBackground(new JButton().getBackground());
-            }
-        }
     }
 
     private void createBoard() {
@@ -80,6 +80,17 @@ public class Surround4Panel extends JPanel {
 
     public int[] getLastCoords() {
         return new int[]{lastRow, lastCol};
+    }
+
+    public void resetBoard() {
+        JButton temp = new JButton();
+
+        // reset colors
+        for (int i = 0; i < boardSize; i++) {// rows
+            for (int j = 0; j < boardSize; j++) {
+                board[i][j].setBackground(temp.getBackground());
+            }
+        }
     }
 
     private void displayBoard() {

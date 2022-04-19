@@ -46,6 +46,8 @@ public class ClientModel {
 
 	private ButtonListener boardListener;
 
+	public static Boolean breakme;
+
 	private GUI gui;
 
 	/****************************************************************
@@ -66,11 +68,18 @@ public class ClientModel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				startGame();
-				if (isHosting)
+				if (isHosting) {
+					System.out.println("Starting host thread");
 					new Thread(() -> play()).start();
-					System.out.println("HOST THREAD CLOSED");
+
+				}
+				System.out.println("HOST THREAD CLOSED");
 			}
 		});		
+
+		if (breakme == null) {
+			breakme = false;
+		}
 	}
 
     /****************************************************************
@@ -150,6 +159,7 @@ public class ClientModel {
 			StringTokenizer tokenizer = new StringTokenizer(response);
 			String resCode = tokenizer.nextToken();
 			if (resCode.equals("SUCCESS")) {
+				gui.resetGameBoard();
 				isHosting = true;
 
 				playerNumber = Integer.parseInt(tokenizer.nextToken());
@@ -206,6 +216,7 @@ public class ClientModel {
 
 			String resCode = tokenizer.nextToken();
 			if (resCode.equals("SUCCESS")) {
+				gui.resetGameBoard();
 				gui.getGamePanel().setPlayers(Integer.parseInt(tokenizer.nextToken()));
 				gui.getGamePanel().setBoardSize(Integer.parseInt(tokenizer.nextToken()));
 				playerNumber = Integer.parseInt(tokenizer.nextToken());
@@ -214,6 +225,7 @@ public class ClientModel {
 				
 				// await for server response in subthread
 				// lets user still interact with GUI, doesn't freeze
+				System.out.println("Opening join thread");
 				Thread responseListener = new Thread(new Runnable() {
 					@Override
 					public void run() {
@@ -230,7 +242,6 @@ public class ClientModel {
 							
 							e.printStackTrace();
 						}
-
 						System.out.println("CLOSING JOINTHREAD");
 					}
 				});
@@ -369,7 +380,7 @@ public class ClientModel {
 	 ***************************************************************/
 	private boolean waitForGameStart() throws Exception {
 		String fromServer = inFromServer.readUTF();
-
+		System.out.println("Received \'" + fromServer +"\' waitForGameStart");
 		StringTokenizer tokenizer = new StringTokenizer(fromServer);
 		if (tokenizer.nextToken().equals("start-game")) {
 			//TODO: setCurrentPlayer
@@ -389,15 +400,16 @@ public class ClientModel {
 	private void play() {
 		gui.swapPanel("game");
 
+		System.out.println("Starting game thread");
+
 		// listen for updates from server
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
 				waitForUpdate();
-				
+				System.out.println("GAME THREAD ENDED");
 			}
 		}).start();
-		System.out.println("GAME THEAD ENDED");
 	}
 
 	/****************************************************************
@@ -415,12 +427,12 @@ public class ClientModel {
 				// System.out.println("Awaiting info from server");
 				String fromServer = inFromServer.readUTF();
 
-				System.out.println("receieved " + fromServer);
+				System.out.println("receieved \'" + fromServer +"\' waitForUpdate");
 
 				processUpdate(fromServer);
 			}
 			catch (Exception e) {
-				// e.printStackTrace();
+				e.printStackTrace();
 			}
 		}
 	}
@@ -437,7 +449,6 @@ public class ClientModel {
 								// 'start firstPlayerNum'
 								
 								// 'reset game'
-		// update gui accordinly and update current player turn to nextPlayerNum		
 
 		int row, col, playerThatWent;
 		StringTokenizer tokens = new StringTokenizer(serverCommand);
@@ -473,7 +484,7 @@ public class ClientModel {
 				gui.generateDialog("Player " + playerThatWent + " won!", "Game Over");
 				disconnectFromServer();
 				gui.swapPanel("menu");
-				gui.getGamePanel().resetBoard();
+				breakme = true;
 				
 				return;
 			}
@@ -560,6 +571,7 @@ public class ClientModel {
 
 			inData.close();
 			toServer.close();
+			inFromServer.close();
 			dataSocket.close();
 			welcomeData.close();
 			ControlSocket.close();
@@ -680,7 +692,7 @@ public class ClientModel {
 	}
 
 	public static void main(String[] args) {
-		GUI gui = new GUI("Test");
+		GUI gui = new GUI("Surround Game");
 		ClientModel cm = new ClientModel(gui);
 	}
 
