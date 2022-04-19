@@ -20,7 +20,7 @@ This is the GUI of that the user interacts with. There is a number of menus that
 
 ## GameServer
 Main server launcher. Will dispatch serverHandlers as needed as clients request to join
-Default port 1370. Set custom port by launching with args ('java GameServer <port>')
+Default port 1370. Set custom port by launching with args ('java GameServer \<port>')
   
 ## ServerHandler
 Helper threads that service each client and respond to requests made.
