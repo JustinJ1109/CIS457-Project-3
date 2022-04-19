@@ -1,7 +1,5 @@
 package surroundpack;
 
-import javax.management.monitor.GaugeMonitor;
-
 /**
  * Main handler that handles all the logic behind cell interactions
  */
