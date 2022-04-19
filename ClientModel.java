@@ -27,6 +27,7 @@ public class ClientModel {
 	private int port;
 
 	protected static boolean renderingOpponent;
+	protected static Vector<PlayerInfo> currentPlayers;
 
 	private boolean isHosting;
 	private boolean connectedToServer;
@@ -379,7 +380,6 @@ public class ClientModel {
 		String fromServer = inFromServer.readUTF();
 		StringTokenizer tokenizer = new StringTokenizer(fromServer);
 		if (tokenizer.nextToken().equals("start-game")) {
-			//TODO: setCurrentPlayer
 			return true;
 		}
 		return false;
@@ -394,6 +394,7 @@ public class ClientModel {
 	 * GOTO waitForUpdate()
 	 ***************************************************************/
 	private void play() {
+		updatePlayerList();
 		gui.swapPanel("game");
 
 
@@ -433,7 +434,6 @@ public class ClientModel {
 	 * @param serverCommand command and args received by server
 	 ***************************************************************/
 	private void processUpdate(String serverCommand) {
-		//TODO: 
 		// receive data in format: 'playerNum row col nextPlayerNum'
 								// 'winner winningPlayerNum'
 								// 'start firstPlayerNum'
@@ -470,7 +470,7 @@ public class ClientModel {
 		try {
 			if (tokens.nextToken().equals("winner")) {
 				
-				gui.generateDialog("Player " + playerThatWent + " won!", "Game Over");
+				gui.generateDialog("Player " + currentPlayers.get(playerThatWent).getUserName() + " won!", "Game Over");
 				disconnectFromServer();
 				gui.swapPanel("menu");
 				breakme = true;
@@ -508,7 +508,7 @@ public class ClientModel {
 			Socket dataSocket = welcomeData.accept();
 			ObjectInputStream ois = new ObjectInputStream(dataSocket.getInputStream());
 
-			Vector<PlayerInfo> currentPlayers = (Vector<PlayerInfo>) ois.readObject();
+			currentPlayers = (Vector<PlayerInfo>) ois.readObject();
 
 			String[] playerUserNames = new String[currentPlayers.size()];
 			int[] playerNums = new int[currentPlayers.size()];

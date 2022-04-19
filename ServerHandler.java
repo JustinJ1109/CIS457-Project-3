@@ -125,7 +125,7 @@ public class ServerHandler extends Thread {
 				connectionSocket.close();
 			}
 			catch (IOException e) {
-				System.out.println("No socket to close");
+				System.err.println("No socket to close");
 			}
 
 		}
@@ -198,7 +198,7 @@ public class ServerHandler extends Thread {
 		}
 		catch (Exception e) {
 			printDate();
-			System.out.println("\nERROR Could not parse \'" + port + "\' as int");
+			System.err.println("\nERROR Could not parse \'" + port + "\' as int");
 			return;
 		}
 
@@ -236,7 +236,7 @@ public class ServerHandler extends Thread {
 			}
 			catch (NumberFormatException e) {
 				printDate();
-				System.out.println("\nERROR Unable to convert numPlayers or boardSize to int");
+				System.err.println("\nERROR Unable to convert numPlayers or boardSize to int");
 				return;
 			}
 
@@ -260,6 +260,7 @@ public class ServerHandler extends Thread {
 			dataSocket = new Socket(connectionSocket.getInetAddress(), port);
 			dataOutToClient = new DataOutputStream(dataSocket.getOutputStream());
 
+			
 			boolean jump = false;
 			for (PlayerInfo pl: currentPlayers) {
 				if (pl.getUserName().equals(userName)) {
@@ -268,16 +269,18 @@ public class ServerHandler extends Thread {
 				}
 			}
 
+			// invalid username, dont even try to connect
 			if (!jump) {
 				if (currentPlayers.size() == 0) {
 					dataOutToClient.writeUTF("NO_HOST_AVAILABLE");
+					jump = true;
 				}
-				if (currentPlayers.size() < maxPlayers) {
+				if (!jump && currentPlayers.size() < maxPlayers) {
 					p.setPlayerNumber(currentPlayers.size());
 					addPlayer(p);
 					dataOutToClient.writeUTF("SUCCESS " + maxPlayers + " "  + boardSize + " " + p.getPlayerNumber());
 				}
-				else {
+				else if (!jump) {
 					dataOutToClient.writeUTF("LOBBY_LIMIT_REACHED");
 				}
 			}
@@ -388,7 +391,7 @@ public class ServerHandler extends Thread {
 
 			System.out.println("");
 			printDate();
-			System.out.print("\nUser disconnected " + userName + " " + clientAddress.getHostAddress());
+			System.out.print("User disconnected " + userName + " " + clientAddress.getHostAddress());
 		}
 		
 		else if (clientCommand.equals("set-tile")) {
@@ -422,6 +425,10 @@ public class ServerHandler extends Thread {
 					System.out.println("[" + currentPlayer + "] won the game");
 					broadcast(currentPlayer + " " + row + " " + col + " " + (currentPlayer = 0) + " winner");
 					gameInstance.reset();
+
+					for(PlayerInfo pl: currentPlayers) {
+						removePlayer(pl);
+					}
 					// tie
 				}
 			}

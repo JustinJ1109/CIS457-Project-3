@@ -407,14 +407,6 @@ public class GUI {
         gamePanel = new Surround4Panel();
     }
 
-    //FIXME: doesnt work
-    /****************************************************************
-     * Remove the start button from non-host gui screen
-     *******************************************************************/
-    public void rmStartButtonFromNonHost() {
-        lobbyPanel.getLayout().removeLayoutComponent(lobbyPlayButton);
-    }
-
     /****************************************************************
      * Display new panel on screen when event is triggered
      * 
