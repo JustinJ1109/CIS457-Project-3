@@ -18,18 +18,20 @@ import java.net.*;
  *******************************************************************/
 public class GameServer {
 
-    private static final int LISTENING_PORT = 1370;
+    private static final int DEFAULT_LISTENING_PORT = 1370;
     
     public static void main(String[] args) throws IOException {
         ServerSocket serverSocket = null;
         boolean listening = true;
         ServerHandler sh;
 
+        int listenPort = args.length != 1 ? 1370 : Integer.parseInt(args[0]);
+
         try {
-            serverSocket = new ServerSocket(LISTENING_PORT);
+            serverSocket = new ServerSocket(listenPort);
         }
         catch (IOException e) {
-            System.err.println("Could not listen on port: " + LISTENING_PORT);
+            System.err.println("Could not listen on port: " + listenPort);
             e.printStackTrace();
             System.exit(-1);
         }

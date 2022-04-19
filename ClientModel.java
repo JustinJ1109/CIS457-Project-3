@@ -23,7 +23,7 @@ import java.awt.event.*;
  *******************************************************************/
 public class ClientModel {
 
-	private final int controlPort = 1370;
+	private int controlPort;
 	private int port;
 
 	protected static boolean renderingOpponent;
@@ -55,7 +55,8 @@ public class ClientModel {
 	 * 
 	 * @param gui client gui class
 	 ***************************************************************/
-	public ClientModel(GUI gui) {
+	public ClientModel(GUI gui, int port) {
+		controlPort = port;
 		this.gui = gui;
 		boardListener = new ButtonListener();
 		gui.getHostStartButton().addActionListener(e -> hostGame());
@@ -693,7 +694,7 @@ public class ClientModel {
 
 	public static void main(String[] args) {
 		GUI gui = new GUI("Surround Game");
-		ClientModel cm = new ClientModel(gui);
+		ClientModel cm = new ClientModel(gui, args.length != 1 ? 1370 : Integer.parseInt(args[0]));
 	}
 
 }   
