@@ -94,7 +94,6 @@ public class Surround4Game {
     public int nextPlayer() {
         player = player + 1 >= numPlayers ? 0 : player + 1;
         
-        
         if (playerStatus[player] != 1) {
             nextPlayer();
         }

@@ -401,7 +401,10 @@ public class GUI {
             row[1] = playerNum[i];
             tableModel.addRow(row);
         }
+    }
 
+    public void resetGameBoard() {
+        gamePanel = new Surround4Panel();
     }
 
     //FIXME: doesnt work
