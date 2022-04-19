@@ -9,11 +9,9 @@
  * 			Noah Meyers
  */
 
-
 package surroundpack;
 import java.awt.*;
 import javax.swing.*;
-import javax.swing.plaf.basic.BasicBorders;
 
 /********************************************************************
  * Game GUI Panel
@@ -43,7 +41,6 @@ public class Surround4Panel extends JPanel {
         panel2 = new JPanel();
         panel3 = new JPanel();
 
-        
         createScores();
 
         game = new Surround4Game(boardSize,numPlayers,startingPlayer);
@@ -54,34 +51,13 @@ public class Surround4Panel extends JPanel {
         add(panel3, BorderLayout.SOUTH);
     }
 
-    // private class ButtonListener implements ActionListener {
-    //     public void actionPerformed(ActionEvent e) {
-
-    //         BoardPiece clicked = (BoardPiece) e.getSource();
-    //         lastRow = clicked.getY();
-    //         lastCol = clicked.getX();
-    //         selectedTile = true;
-
-    //         displayBoard();
-
-    //         int winner = game.getWinner();
-    //         if(winner == -2)
-    //             JOptionPane.showMessageDialog(null,"Draw Game!");
-    //         else if (winner != -1) {
-    //             JOptionPane.showMessageDialog(null,
-    //                     "Player " + winner + " Wins!");
-    //             scores[winner] += 1;
-    //             displayScores();
-    //             game = new Surround4Game(boardSize, numPlayers, startingPlayer);
-    //             for (int row = 0; row < boardSize; row++) {
-    //                 for (int col = 0; col < boardSize; col++) {
-    //                     board[row][col].setBackground(null);
-    //                 }
-    //             }
-    //             displayBoard();
-    //         }
-    //     }
-    // }
+    public void resetBoard() {
+        for (int i = 0; i < boardSize; i++) {
+            for (int j = 0; j < boardSize; j++) {
+                board[i][j].setBackground(new JButton().getBackground());
+            }
+        }
+    }
 
     private void createBoard() {
 

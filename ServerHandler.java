@@ -103,6 +103,7 @@ public class ServerHandler extends Thread {
 	@SuppressWarnings("unchecked")
 	public void run() {
 		try {
+			System.out.println("Running");
 		    while(running) {
 		        if (welcome) {
 		            connectUser(inFromClient.readUTF());
@@ -134,8 +135,10 @@ public class ServerHandler extends Thread {
 				connectionSocket.close();
 			}
 			catch (IOException e) {
-
+				System.out.println("No socket to close");
 			}
+
+			System.out.println("Closing server");
 		}
 	}
 
@@ -187,11 +190,7 @@ public class ServerHandler extends Thread {
 	 * All commands are preceeded with data port to send response 
 	 * back to.
 	 * 
-	 * @param clientCommand Command provided by user Accepted 
-	 * commands include: 
-	 * 	"place x y" - request to place a tile at coordinates
-	 * 	"newgame" - request to restart board and start new game
-	 * 	"disconnect" - request to disconnect from server
+	 * @param clientCommand Command provided by user 
 	 * 
 	 * @throws Exception
 	 ***************************************************************/
@@ -378,6 +377,11 @@ public class ServerHandler extends Thread {
 
 			dataOutToClient.writeUTF("SUCCESS");
 
+			if (isHost) {
+				isHost = false;
+				hosting = false;
+			}
+
 			for (PlayerInfo pl: currentPlayers) {
 				if (pl.getPlayerID() == myPlayerID) {
 					removePlayer(pl);
@@ -413,7 +417,10 @@ public class ServerHandler extends Thread {
 
 				if (winner > -1) {
 					// winner
-					broadcast("winner " + winner);
+					// broken here. something wrong in Surround4Game logic
+					printDate();
+					System.out.println("GAME WON by player " + winner);
+					broadcast(currentPlayer + " " + row + " " + col + " " + winner + " winner");
 				}
 				else if (winner == -1) {
 					// no winner
@@ -421,6 +428,10 @@ public class ServerHandler extends Thread {
 					broadcast(currentPlayer + " " + row + " " + col + " " + (currentPlayer = gameInstance.nextPlayer()));
 				}
 				else {
+					printDate();
+					System.out.println("GAME WON by player " + winner);
+					broadcast(currentPlayer + " " + row + " " + col + " " + winner + " winner");
+					gameInstance.reset();
 					// tie
 				}
 				// add to internal board tracker
@@ -462,6 +473,12 @@ public class ServerHandler extends Thread {
 		}
 	}
 
+	/****************************************************************
+	 * Send a message to all connected clients via control socket IO 
+	 * stream
+	 * 
+	 * @param message message to give to all clients
+	 ***************************************************************/
 	private static void broadcast(String message) {
 		synchronized(handlers) {
 			Enumeration e = handlers.elements();
@@ -481,26 +498,9 @@ public class ServerHandler extends Thread {
 		}
 	}
 
-	// FIXME: potential issue here. Threads may not share data with eachother (p1 instance of this serverhandler
-	// doesnt have same next player and p2)
-
-	/****************************************************************
-	 * Set current player to next valid player. Reset turn once 
-	 * all players have gone
-	 ***************************************************************/
-	private void nextPlayer() {
-		currentPlayer = currentPlayer < maxPlayers ? currentPlayer + 1 : 0;
-	}
-
-	/****************************************************************
-	 * Set current player to player specified.
-	 * 
-	 * @param currentPlayer player number to set current player to
-	 ***************************************************************/
-	private void setCurrentPlayer(int currentPlayer) {
-		this.currentPlayer = currentPlayer;
-	}
-
+	/**
+	 * Print the date and time in format [YYYY-MM-DD HH:MM:SS UTF]
+	 */
 	private void printDate() {
 		Date date = new Date(System.currentTimeMillis());
 		System.out.print("[" + formatter.format(date) + "] ");

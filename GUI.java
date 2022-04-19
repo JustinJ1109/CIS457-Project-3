@@ -369,8 +369,11 @@ public class GUI {
 
     public void generateDialog(String msg, String label) {
         JOptionPane.showMessageDialog(frame, msg, label, JOptionPane.OK_OPTION);
+    }
 
-        
+    public int generateWinDialog(String msg, String label) {
+        int input = JOptionPane.showOptionDialog(frame, msg, label, JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, null, null);
+        return input;
     }
 
     public Surround4Panel getGamePanel() {
