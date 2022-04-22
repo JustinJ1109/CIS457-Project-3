@@ -1,6 +1,6 @@
 # CIS457-Project-3
 
-A Client-server implementation of the Surround Game to play online multiplayer using TCP connection  
+A Client-server implementation of the Surround Game to play online multiplayer 
 
 ## Surround Game
 The game is simple. Choose a number of players. Each player will take turns to place a single tile at a time on a 10x10 board.  
